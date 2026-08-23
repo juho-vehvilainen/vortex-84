@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VORTEX 84 · Incoming Transmission From 2084</title>
+<meta name="description" content="42 + 42 = 84. A tear has appeared in spacetime. Saturday 26.9.2026, Lapinlahdenkatu 16, Helsinki.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#05020c">
+
+<!-- Social unfurl -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="VORTEX 84">
+<meta property="og:description" content="42 + 42 = 84. A tear has appeared in spacetime. Saturday 26.9.2026, Helsinki. Come prepared.">
+<meta property="og:image" content="assets/img/og-1200x630.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VORTEX 84">
+<meta name="twitter:description" content="42 + 42 = 84. A tear has appeared in spacetime. Saturday 26.9.2026, Helsinki.">
+<meta name="twitter:image" content="assets/img/og-1200x630.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=VT323&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   VORTEX 84 — palette lifted off the poster
+   ============================================================ */
+:root{
+  --void:#05020c;
+  --void-2:#0b0518;
+  --magenta:#ff2d95;
+  --pink:#ff5cc8;
+  --cyan:#22d3ee;
+  --blue:#2b6cff;
+  --violet:#7c3aed;
+  --orange:#ff6a1f;
+  --amber:#ffb020;
+  --green:#4ade80;
+  --text:#efe9ff;
+  --dim:#a596cf;
+  --dimmer:#6f61a0;
+  --maxw:1080px;
+  --pad:clamp(20px,5vw,48px);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+html,body{margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+
+body{
+  background:var(--void);
+  color:var(--text);
+  font-family:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-weight:300;
+  font-size:clamp(16px,1.05vw + 13px,19px);
+  line-height:1.68;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+body.locked{overflow:hidden;height:100vh}
+
+img{max-width:100%;height:auto;display:block}
+
+/* ---------- typography utilities ---------- */
+.mono{font-family:'Share Tech Mono',ui-monospace,'SFMono-Regular',Menlo,monospace}
+.crt{font-family:'VT323',ui-monospace,monospace}
+
+.eyebrow{
+  font-family:'Share Tech Mono',ui-monospace,monospace;
+  font-size:.72rem;letter-spacing:.34em;text-transform:uppercase;
+  color:var(--cyan);
+  display:flex;align-items:center;gap:14px;
+  margin:0 0 26px;
+}
+.eyebrow::after{
+  content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(34,211,238,.6),rgba(34,211,238,0));
+}
+
+h1,h2,h3{
+  font-family:'Orbitron',Impact,'Arial Black',sans-serif;
+  font-weight:900;line-height:.95;margin:0 0 .5em;
+  letter-spacing:-.01em;
+}
+h2{font-size:clamp(1.9rem,5.4vw,3.5rem)}
+h3{font-size:clamp(1.05rem,2vw,1.35rem);font-weight:700;letter-spacing:.06em}
+
+/* chrome-and-neon display fill, as on the poster */
+.chrome{
+  background:linear-gradient(178deg,
+    #f4fbff 0%, #a8e2ff 22%, #3f86ff 44%,
+    #12224d 51%, #ff2d95 70%, #ffc4e9 92%, #fff 100%);
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 10px rgba(255,45,149,.65)) drop-shadow(0 0 40px rgba(43,108,255,.42));
+}
+.skew{display:inline-block;transform:skewX(-8deg)}
+
+.neon{color:#fff;text-shadow:0 0 5px #fff,0 0 16px var(--nc,var(--magenta)),0 0 38px var(--nc,var(--magenta)),0 0 80px var(--nc,var(--magenta))}
+.neon-c{--nc:var(--cyan)}
+.neon-m{--nc:var(--magenta)}
+.neon-a{--nc:var(--amber)}
+
+.lead{font-size:clamp(1.12rem,1.5vw + .7rem,1.62rem);line-height:1.5;color:#f6f2ff;font-weight:300}
+.dim{color:var(--dim)}
+.beat{font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+
+/* ============================================================
+   Fixed background layers
+   ============================================================ */
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+
+/* Stacking: canvas 0, legibility scrim 1, content 2, CRT overlays 3. */
+.layer{position:fixed;inset:0;pointer-events:none;z-index:3}
+
+/* CRT scanlines */
+.scan{
+  background:repeating-linear-gradient(180deg,
+    rgba(0,0,0,0) 0 2px, rgba(0,0,0,.30) 2px 3px);
+  opacity:.55;mix-blend-mode:multiply;
+}
+/* slow sweeping bright band */
+.sweep{
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(180,220,255,.055) 46%,rgba(255,255,255,0) 100%);
+  height:34vh;top:-34vh;bottom:auto;
+  animation:sweep 9s linear infinite;
+}
+@keyframes sweep{to{transform:translateY(140vh)}}
+
+/* film grain */
+.grain{
+  opacity:.10;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  animation:grain 620ms steps(4) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}
+  50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(0,0)}
+}
+
+/* CRT vignette + curvature glow */
+.vig{
+  background:
+    radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 42%,rgba(0,0,0,.55) 82%,rgba(0,0,0,.9) 100%),
+    radial-gradient(60% 40% at 50% 100%,rgba(124,58,237,.16),rgba(0,0,0,0) 70%);
+}
+
+/* Legibility scrim. The backdrop is fixed, so the sun and horizon always sit in
+   the same band of the viewport; this holds that band back so copy stays readable. */
+.scrim{
+  z-index:1;
+  background:linear-gradient(180deg,
+    rgba(5,2,12,.14) 0%, rgba(5,2,12,.40) 30%,
+    rgba(5,2,12,.62) 52%, rgba(5,2,12,.58) 76%, rgba(5,2,12,.34) 100%);
+}
+
+/* ============================================================
+   Airlock (entry gate)
+   ============================================================ */
+#airlock{
+  position:fixed;inset:0;z-index:60;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(18px,3vh,34px);
+  padding:var(--pad);
+  background:radial-gradient(90% 70% at 50% 50%,#0d0620 0%,#05020c 70%);
+  text-align:center;
+  transition:opacity .9s ease,visibility .9s ease;
+}
+#airlock.gone{opacity:0;visibility:hidden}
+
+.boot{
+  font-family:'VT323',monospace;
+  font-size:clamp(1rem,3.2vw,1.5rem);
+  color:var(--green);
+  text-shadow:0 0 10px rgba(74,222,128,.75);
+  text-align:left;
+  width:min(640px,100%);
+  min-height:8.2em;
+  letter-spacing:.02em;
+}
+.boot .ln{white-space:pre-wrap;opacity:.92}
+.boot .ln.hi{color:var(--magenta);text-shadow:0 0 12px rgba(255,45,149,.9)}
+.cursor{display:inline-block;width:.6em;height:1.05em;vertical-align:-.16em;background:currentColor;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.gate-title{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(2.6rem,13vw,6rem);line-height:.86;
+  opacity:0;transform:translateY(14px);
+  transition:opacity .9s ease .1s,transform .9s ease .1s;
+}
+.gate-actions{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  opacity:0;transform:translateY(14px);pointer-events:none;
+  transition:opacity .7s ease,transform .7s ease;
+}
+#airlock.ready .gate-title,#airlock.ready .gate-actions{opacity:1;transform:none}
+#airlock.ready .gate-actions{pointer-events:auto}
+
+/* ---------- neon buttons ---------- */
+.btn{
+  font-family:'Orbitron',sans-serif;font-weight:700;
+  font-size:clamp(.82rem,1.5vw,1rem);letter-spacing:.2em;text-transform:uppercase;
+  color:#fff;background:rgba(255,45,149,.07);
+  border:2px solid var(--magenta);border-radius:3px;
+  padding:1.05em 2.1em;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:.7em;
+  box-shadow:0 0 0 1px rgba(255,45,149,.28) inset,0 0 18px rgba(255,45,149,.4),0 0 46px rgba(255,45,149,.18);
+  text-shadow:0 0 12px rgba(255,45,149,.9);
+  transition:transform .18s ease,box-shadow .25s ease,background .25s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:hover,.btn:focus-visible{
+  background:rgba(255,45,149,.18);transform:translateY(-2px);
+  box-shadow:0 0 0 1px rgba(255,45,149,.5) inset,0 0 28px rgba(255,45,149,.7),0 0 80px rgba(255,45,149,.34);
+  outline:none;
+}
+.btn.cy{
+  background:rgba(34,211,238,.06);border-color:var(--cyan);
+  box-shadow:0 0 0 1px rgba(34,211,238,.28) inset,0 0 18px rgba(34,211,238,.4),0 0 46px rgba(34,211,238,.16);
+  text-shadow:0 0 12px rgba(34,211,238,.9);
+}
+.btn.cy:hover,.btn.cy:focus-visible{
+  background:rgba(34,211,238,.16);
+  box-shadow:0 0 0 1px rgba(34,211,238,.5) inset,0 0 28px rgba(34,211,238,.7),0 0 80px rgba(34,211,238,.3);
+}
+.btn.ghost{
+  border-color:rgba(165,150,207,.4);background:transparent;color:var(--dim);
+  box-shadow:none;text-shadow:none;font-size:.72rem;letter-spacing:.24em;padding:.85em 1.6em;
+}
+.btn.ghost:hover,.btn.ghost:focus-visible{color:#fff;border-color:var(--dim);background:rgba(165,150,207,.08)}
+.btn.big{font-size:clamp(.92rem,2.2vw,1.24rem);padding:1.25em 2.6em}
+
+/* ============================================================
+   Layout shell
+   ============================================================ */
+#page{position:relative;z-index:2}
+.wrap{width:min(var(--maxw),100%);margin:0 auto;padding-left:var(--pad);padding-right:var(--pad)}
+section{position:relative;padding:clamp(76px,13vh,150px) 0}
+.narrow{width:min(720px,100%)}
+.center{text-align:center;margin-left:auto;margin-right:auto}
+
+.rule{
+  height:1px;border:0;margin:0;
+  background:linear-gradient(90deg,rgba(255,45,149,0),rgba(255,45,149,.55),rgba(34,211,238,.55),rgba(34,211,238,0));
+}
+
+/* scroll reveal */
+[data-reveal]{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.2,.7,.2,1),transform .85s cubic-bezier(.2,.7,.2,1)}
+[data-reveal].in{opacity:1;transform:none}
+[data-reveal][data-delay="1"]{transition-delay:.12s}
+[data-reveal][data-delay="2"]{transition-delay:.24s}
+[data-reveal][data-delay="3"]{transition-delay:.36s}
+[data-reveal][data-delay="4"]{transition-delay:.48s}
+
+/* ---------- sticky mini bar ---------- */
+#bar{
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:12px var(--pad);
+  background:linear-gradient(180deg,rgba(5,2,12,.92),rgba(5,2,12,.55) 70%,rgba(5,2,12,0));
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  transform:translateY(-110%);transition:transform .45s ease;
+}
+#bar.show{transform:none}
+#bar .mark{font-family:'Orbitron',sans-serif;font-weight:900;font-size:.92rem;letter-spacing:.18em}
+#bar a{
+  font-family:'Orbitron',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.2em;
+  color:#fff;text-decoration:none;padding:.6em 1.2em;border:1px solid var(--magenta);border-radius:3px;
+  box-shadow:0 0 16px rgba(255,45,149,.35);text-shadow:0 0 10px rgba(255,45,149,.8);white-space:nowrap;
+}
+#bar a:hover{background:rgba(255,45,149,.16)}
+
+/* ---------- audio toggle ---------- */
+#audiobtn{
+  position:fixed;right:calc(var(--pad) * .7);bottom:calc(var(--pad) * .7);z-index:45;
+  display:none;align-items:center;gap:.6em;
+  font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:.16em;
+  color:var(--cyan);background:rgba(5,2,12,.72);
+  border:1px solid rgba(34,211,238,.45);border-radius:999px;
+  padding:.72em 1.15em;cursor:pointer;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  box-shadow:0 0 20px rgba(34,211,238,.22);
+  -webkit-tap-highlight-color:transparent;
+}
+#audiobtn.on{display:flex}
+#audiobtn:hover{border-color:var(--cyan);box-shadow:0 0 28px rgba(34,211,238,.4)}
+#audiobtn.muted{color:var(--dimmer);border-color:rgba(165,150,207,.28);box-shadow:none}
+.eq{display:flex;align-items:flex-end;gap:2px;height:12px;width:16px}
+.eq i{flex:1;background:currentColor;height:30%;border-radius:1px;transition:height .09s linear}
+#audiobtn.muted .eq i{height:14%!important}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+#hero{
+  min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+  padding-top:clamp(70px,12vh,120px);padding-bottom:clamp(46px,9vh,90px);
+}
+.hero-grid{display:grid;gap:clamp(30px,5vw,56px);align-items:center;grid-template-columns:1fr}
+/* min-width:0 so a long display word cannot starve the other column */
+.hero-grid > *{min-width:0}
+@media (min-width:900px){.hero-grid{grid-template-columns:1.06fr .94fr}}
+
+/* a soft scrim so the hero copy stays readable where the sun rises behind it */
+.hero-copy{position:relative;isolation:isolate}
+.hero-copy::before{
+  content:"";position:absolute;z-index:-1;
+  inset:-8% -12% -14% -14%;
+  background:radial-gradient(72% 64% at 34% 46%,rgba(5,2,12,.72) 0%,rgba(5,2,12,.45) 46%,rgba(5,2,12,0) 100%);
+}
+
+.wordmark{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(2.9rem,13vw,6rem);line-height:.84;
+  margin:0 0 .18em;letter-spacing:-.02em;
+}
+.wordmark span{display:block}
+.hero-sub{
+  font-family:'Share Tech Mono',monospace;
+  font-size:clamp(.68rem,1.9vw,.86rem);letter-spacing:.26em;text-transform:uppercase;
+  color:var(--cyan);margin:0 0 1.4em;line-height:1.9;
+}
+.hero-sub b{color:var(--magenta);font-weight:400}
+
+/* poster frame */
+.poster{position:relative;isolation:isolate}
+.poster::before{
+  content:"";position:absolute;inset:-14px;z-index:-1;border-radius:4px;
+  background:linear-gradient(150deg,var(--magenta),var(--violet) 45%,var(--cyan));
+  filter:blur(26px);opacity:.5;
+}
+.poster img{
+  border:1px solid rgba(255,255,255,.14);border-radius:2px;
+  box-shadow:0 0 0 1px rgba(255,45,149,.3),0 30px 80px rgba(0,0,0,.75);
+  max-height:min(76svh,760px);width:auto;margin:0 auto;
+}
+.poster figcaption{
+  font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.2em;
+  color:var(--dimmer);text-transform:uppercase;margin-top:12px;text-align:center;
+}
+
+.scrollcue{
+  display:flex;align-items:center;gap:12px;margin-top:clamp(26px,5vh,48px);
+  font-family:'Share Tech Mono',monospace;font-size:.66rem;letter-spacing:.28em;
+  color:var(--dim);text-transform:uppercase;
+}
+.scrollcue i{
+  width:1px;height:44px;background:linear-gradient(180deg,var(--cyan),rgba(34,211,238,0));
+  animation:cue 2.1s ease-in-out infinite;transform-origin:top;
+}
+@keyframes cue{0%,100%{transform:scaleY(.35);opacity:.5}50%{transform:scaleY(1);opacity:1}}
+
+/* ============================================================
+   Equation
+   ============================================================ */
+.equation{
+  display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+  gap:clamp(10px,2.4vw,26px);margin:clamp(34px,6vh,62px) 0;
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(3rem,15vw,8rem);line-height:1;
+}
+.equation em{font-style:normal;opacity:0;transform:scale(.72);transition:opacity .6s ease,transform .6s cubic-bezier(.2,1.5,.3,1)}
+.equation.in em{opacity:1;transform:none}
+.equation.in em:nth-child(2){transition-delay:.16s}
+.equation.in em:nth-child(3){transition-delay:.32s}
+.equation.in em:nth-child(4){transition-delay:.48s}
+.equation.in em:nth-child(5){transition-delay:.64s}
+.equation .op{font-size:.5em;color:var(--cyan);text-shadow:0 0 18px rgba(34,211,238,.8)}
+
+/* ============================================================
+   Vortex
+   ============================================================ */
+.vortex-stage{
+  display:grid;align-items:center;justify-items:center;
+  grid-template-columns:1fr auto 1fr;
+  gap:clamp(8px,3vw,34px);
+  margin:clamp(24px,6vh,56px) 0;
+}
+.spinner{position:relative;display:grid;place-items:center;width:clamp(160px,32vw,250px);aspect-ratio:1}
+.spinner::before{
+  content:"";position:absolute;inset:-34%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(5,2,12,.88),rgba(5,2,12,.6) 62%,rgba(5,2,12,0) 100%);
+}
+.ring{
+  position:absolute;border-radius:50%;aspect-ratio:1;
+  background:conic-gradient(from 0deg,
+    rgba(255,45,149,0) 0deg, var(--magenta) 40deg, rgba(255,45,149,0) 110deg,
+    rgba(34,211,238,0) 190deg, var(--cyan) 240deg, rgba(34,211,238,0) 320deg);
+  mask:radial-gradient(closest-side,transparent 74%,#000 82%,#000 98%,transparent 100%);
+  -webkit-mask:radial-gradient(closest-side,transparent 74%,#000 82%,#000 98%,transparent 100%);
+}
+.ring.r1{width:100%;animation:spin 9s linear infinite}
+.ring.r2{width:70%;animation:spin 6s linear infinite reverse;opacity:.9}
+.ring.r3{width:44%;animation:spin 3.6s linear infinite;opacity:.8}
+@keyframes spin{to{transform:rotate(360deg)}}
+.core{
+  width:26%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,var(--cyan) 30%,var(--violet) 62%,rgba(5,2,12,0) 78%);
+  animation:pulse 2.6s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(.85);opacity:.8}50%{transform:scale(1.1);opacity:1}}
+.yr-big{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(1.4rem,6.5vw,3.2rem);line-height:1;white-space:nowrap;
+}
+
+/* ============================================================
+   Evidence cards
+   ============================================================ */
+.cards{display:grid;gap:clamp(14px,2.4vw,22px);grid-template-columns:1fr;margin:clamp(30px,5vh,52px) 0}
+@media (min-width:620px){.cards{grid-template-columns:1fr 1fr}}
+@media (min-width:1000px){.cards{grid-template-columns:repeat(4,1fr)}}
+
+.card{
+  position:relative;padding:24px 20px 22px;
+  border:1px solid rgba(165,150,207,.2);border-radius:3px;
+  background:linear-gradient(165deg,rgba(124,58,237,.20),rgba(8,3,18,.86));
+  overflow:hidden;transition:border-color .3s ease,transform .3s ease,box-shadow .3s ease;
+}
+.card::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,0) 42%);
+}
+.card:hover{transform:translateY(-4px);border-color:rgba(255,45,149,.55);box-shadow:0 0 34px rgba(255,45,149,.2)}
+.card .yr{
+  font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.24em;
+  color:var(--dimmer);text-transform:uppercase;
+}
+.card h3{margin:.55em 0 .3em;color:#fff}
+.card p{margin:0;font-size:.92rem;color:var(--dim);line-height:1.55}
+.glyph{height:66px;display:flex;align-items:center;justify-content:flex-start;margin-bottom:6px}
+
+/* glyph: 42+42 */
+.g42{
+  font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.75rem;letter-spacing:-.01em;color:#fff;
+  text-shadow:0 0 5px #fff,0 0 16px var(--cyan),0 0 34px var(--magenta);
+}
+/* glyph: tetris */
+.tetris{display:grid;grid-template-columns:repeat(4,11px);grid-auto-rows:11px;gap:2px}
+.tetris i{background:rgba(165,150,207,.13);border-radius:1px}
+.tetris i.a{background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
+.tetris i.b{background:var(--magenta);box-shadow:0 0 9px var(--magenta)}
+.tetris i.c{background:var(--amber);box-shadow:0 0 9px var(--amber)}
+.tetris i.d{background:var(--green);box-shadow:0 0 9px var(--green)}
+/* glyph: T-800 */
+.skull{width:52px;height:60px}
+.skull .eye{fill:#ff1a1a;filter:drop-shadow(0 0 6px #ff1a1a);animation:eye 3.4s ease-in-out infinite}
+@keyframes eye{0%,88%,100%{opacity:1}92%{opacity:.25}}
+/* glyph: DX7 */
+.keys{display:flex;height:40px;width:76px;position:relative;border:1px solid rgba(165,150,207,.35);border-radius:2px;overflow:hidden;background:#0e0a1a}
+.keys i{flex:1;border-right:1px solid rgba(165,150,207,.28);background:linear-gradient(180deg,#dcd6ee,#8e86ad)}
+.keys i:last-child{border-right:0}
+.keys b{position:absolute;top:0;width:7px;height:60%;background:#0a0713;box-shadow:0 0 6px rgba(34,211,238,.5)}
+
+/* ============================================================
+   Awesomeness gauge
+   ============================================================ */
+.gauge-wrap{display:grid;gap:clamp(20px,4vw,42px);align-items:center;grid-template-columns:1fr}
+@media (min-width:800px){.gauge-wrap{grid-template-columns:auto 1fr}}
+.gauge{width:min(330px,80vw);height:auto;overflow:visible;justify-self:center}
+.gauge .track{fill:none;stroke:rgba(165,150,207,.18);stroke-width:10;stroke-linecap:round}
+.gauge .safe{fill:none;stroke:var(--cyan);stroke-width:10;stroke-linecap:round;opacity:.45}
+.gauge .red{fill:none;stroke:#ff2020;stroke-width:10;stroke-linecap:round;filter:drop-shadow(0 0 8px rgba(255,32,32,.9))}
+.gauge .tick{stroke:rgba(165,150,207,.4);stroke-width:2}
+.gauge .lbl{font-family:'Share Tech Mono',monospace;font-size:9px;fill:var(--dimmer);letter-spacing:.14em}
+.gauge .needle{stroke:#fff;stroke-width:3.5;stroke-linecap:round;filter:drop-shadow(0 0 7px var(--magenta))}
+#needle{transform:rotate(-92deg);transform-origin:160px 152px;transition:transform 2.4s cubic-bezier(.16,1.1,.28,1)}
+.gauge.in #needle{transform:rotate(98deg);animation:jitter .28s steps(2) infinite 2.4s}
+@keyframes jitter{0%{transform:rotate(98deg)}50%{transform:rotate(95.4deg)}100%{transform:rotate(98deg)}}
+.readout{
+  font-family:'Share Tech Mono',monospace;font-size:.78rem;letter-spacing:.14em;
+  color:var(--dim);line-height:2.1;text-transform:uppercase;
+}
+.readout b{color:#ff4a4a;font-weight:400;text-shadow:0 0 12px rgba(255,32,32,.8)}
+.readout .ok{color:var(--green)}
+.glitch{animation:gl 3.4s steps(1) infinite}
+@keyframes gl{0%,92%,100%{transform:none;opacity:1}94%{transform:translateX(-3px);opacity:.7}96%{transform:translateX(4px)}98%{transform:translateX(-2px);opacity:.85}}
+
+/* ============================================================
+   Guide terminal
+   ============================================================ */
+.terminal{
+  border:1px solid rgba(74,222,128,.34);border-radius:4px;
+  background:linear-gradient(180deg,rgba(6,20,12,.96),rgba(3,8,6,.97));
+  box-shadow:0 0 60px rgba(74,222,128,.1),0 0 0 1px rgba(74,222,128,.08) inset;
+  padding:0;overflow:hidden;
+}
+.terminal header{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;border-bottom:1px solid rgba(74,222,128,.24);
+  background:rgba(74,222,128,.07);
+  font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.2em;
+  color:var(--green);text-transform:uppercase;
+}
+.terminal header i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:blink 1.6s steps(2) infinite}
+.terminal .body{padding:clamp(20px,4vw,36px)}
+.terminal p{
+  font-family:'VT323',monospace;font-size:clamp(1.1rem,2.6vw,1.5rem);line-height:1.5;
+  color:#c9ffd8;text-shadow:0 0 9px rgba(74,222,128,.4);margin:0 0 .7em;
+}
+.terminal p:last-child{margin-bottom:0}
+.terminal .big{font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(1.15rem,3.4vw,2rem);color:#fff;text-shadow:0 0 16px rgba(74,222,128,.85);line-height:1.25;letter-spacing:.01em}
+
+/* ============================================================
+   Coordinates + countdown
+   ============================================================ */
+#enter{padding-top:clamp(60px,10vh,110px)}
+.enter-mark{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(2.4rem,11vw,6.4rem);line-height:.86;margin:0 0 .3em;
+}
+.coords{
+  display:inline-flex;flex-direction:column;gap:8px;
+  border-left:2px solid var(--magenta);padding:4px 0 4px 22px;margin:clamp(22px,4vh,38px) 0;
+  text-align:left;
+}
+.coords .l1{font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(1.05rem,3.4vw,1.6rem);letter-spacing:.04em;color:#fff}
+.coords .l2{font-family:'Share Tech Mono',monospace;font-size:clamp(.8rem,2.2vw,1rem);letter-spacing:.12em;color:var(--cyan)}
+.coords .l1 span,.coords .l2 span{white-space:nowrap}
+
+.countdown{margin:clamp(26px,5vh,48px) 0 0}
+.cd-label{
+  font-family:'Share Tech Mono',monospace;font-size:.66rem;letter-spacing:.3em;
+  color:var(--dim);text-transform:uppercase;margin-bottom:14px;
+}
+.cd{display:flex;gap:clamp(8px,2.2vw,18px);justify-content:center;flex-wrap:wrap}
+.cd div{
+  min-width:clamp(62px,16vw,96px);padding:14px 8px 10px;
+  border:1px solid rgba(255,45,149,.32);border-radius:3px;
+  background:linear-gradient(180deg,rgba(255,45,149,.14),rgba(8,3,18,.84));
+  box-shadow:0 0 22px rgba(255,45,149,.14) inset;
+}
+.cd b{
+  display:block;font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(1.5rem,6vw,2.5rem);line-height:1;color:#fff;
+  text-shadow:0 0 10px rgba(255,45,149,.9),0 0 34px rgba(255,45,149,.5);
+  font-variant-numeric:tabular-nums;
+}
+.cd s{
+  display:block;text-decoration:none;margin-top:8px;
+  font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.22em;
+  color:var(--dimmer);text-transform:uppercase;
+}
+
+/* ============================================================
+   Dress code
+   ============================================================ */
+.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:clamp(26px,5vh,44px) 0 0}
+.chip{
+  font-family:'Share Tech Mono',monospace;font-size:clamp(.68rem,1.9vw,.82rem);
+  letter-spacing:.14em;text-transform:uppercase;color:#fff;
+  padding:.62em 1.05em;border-radius:999px;
+  border:1px solid var(--cc,var(--magenta));
+  background:color-mix(in srgb,var(--cc,var(--magenta)) 10%,transparent);
+  box-shadow:0 0 14px color-mix(in srgb,var(--cc,var(--magenta)) 35%,transparent);
+  text-shadow:0 0 10px var(--cc,var(--magenta));
+  transition:transform .2s ease,box-shadow .25s ease;
+}
+.chip:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 0 26px var(--cc,var(--magenta))}
+
+/* ============================================================
+   RSVP
+   ============================================================ */
+#rsvp{text-align:center;padding-bottom:clamp(90px,14vh,160px)}
+.panic{
+  font-family:'Orbitron',sans-serif;font-weight:900;
+  font-size:clamp(2.2rem,11vw,5.6rem);line-height:.9;margin:0;
+}
+.panic span{display:block}
+.deadline{
+  font-family:'Share Tech Mono',monospace;font-size:.74rem;letter-spacing:.22em;
+  color:var(--dim);text-transform:uppercase;margin-top:22px;
+}
+.deadline b{color:var(--amber);font-weight:400;text-shadow:0 0 12px rgba(255,176,32,.7)}
+.cd.small div{min-width:clamp(52px,12vw,72px);padding:9px 6px 7px;border-color:rgba(255,176,32,.3);background:linear-gradient(180deg,rgba(255,176,32,.12),rgba(8,3,18,.84));box-shadow:none}
+.cd.small b{font-size:clamp(1rem,3.6vw,1.5rem);text-shadow:0 0 10px rgba(255,176,32,.8)}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+footer{
+  border-top:1px solid rgba(165,150,207,.14);
+  padding:clamp(30px,5vh,52px) 0 clamp(60px,9vh,90px);
+  font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.2em;
+  color:var(--dimmer);text-transform:uppercase;line-height:2.4;text-align:center;
+}
+footer span{color:var(--magenta)}
+
+/* ============================================================
+   Copy sits on a moving backdrop, so every run of body text gets a soft dark
+   halo. Declared last so it lands on top of the block styles above, while the
+   more specific neon/glow rules inside these blocks still win.
+   ============================================================ */
+.lead,.eyebrow,.hero-sub,.readout,.deadline,.cd-label,.card p,.card .yr,
+.coords .l1,.coords .l2,footer,.scrollcue,.poster figcaption,.chip{
+  text-shadow:0 1px 2px rgba(5,2,12,.92),0 2px 18px rgba(5,2,12,.85);
+}
+.chip{text-shadow:0 1px 2px rgba(5,2,12,.92),0 0 12px var(--cc,var(--magenta))}
+.lead .neon,.panic .neon{text-shadow:0 0 5px #fff,0 0 16px var(--nc,var(--magenta)),0 0 38px var(--nc,var(--magenta)),0 0 80px var(--nc,var(--magenta))}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important}
+  [data-reveal]{opacity:1!important;transform:none!important}
+  .sweep,.grain{display:none}
+  #needle{transform:rotate(98deg)}
+}
+</style>
+</head>
+<body class="locked">
+
+<!-- ===== background ===== -->
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="layer scrim" aria-hidden="true"></div>
+<div class="layer scan" aria-hidden="true"></div>
+<div class="layer sweep" aria-hidden="true"></div>
+<div class="layer grain" aria-hidden="true"></div>
+<div class="layer vig" aria-hidden="true"></div>
+
+<!-- ===== airlock ===== -->
+<div id="airlock">
+  <div class="boot" id="boot" aria-live="polite"></div>
+  <h1 class="gate-title"><span class="chrome skew">VORTEX&nbsp;84</span></h1>
+  <div class="gate-actions">
+    <button class="btn big" id="engage" type="button" hidden>&#9834;&nbsp; Engage audio &nbsp;&#9654;</button>
+    <button class="btn ghost" id="silent" type="button">Enter in silence</button>
+  </div>
+</div>
+
+<!-- ===== sticky bar ===== -->
+<div id="bar">
+  <span class="mark chrome">VORTEX 84</span>
+  <a href="#rsvp">RSVP</a>
+</div>
+
+<!-- ===== audio toggle ===== -->
+<button id="audiobtn" type="button" aria-pressed="true" aria-label="Toggle music">
+  <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+  <span id="audiolabel">Audio on</span>
+</button>
+
+<audio id="track" loop preload="none" crossorigin="anonymous"></audio>
+
+<main id="page">
+
+  <!-- ============ HERO ============ -->
+  <section id="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="hero-sub" data-reveal>
+          Incoming transmission from 2084<br>
+          <b>Anomaly detected in the space-time continuum</b>
+        </p>
+        <h1 class="wordmark" data-reveal data-delay="1">
+          <span class="chrome skew">VORTEX</span>
+          <span class="chrome skew">84</span>
+        </h1>
+        <p class="lead dim" data-reveal data-delay="2">
+          Saturday 26.9.2026 &middot; Helsinki &middot; The fate of the world rests on us now.
+        </p>
+        <div class="scrollcue" data-reveal data-delay="3"><i></i> Scroll to decode</div>
+      </div>
+      <figure class="poster" data-reveal data-delay="2" style="margin:0">
+        <picture>
+          <source type="image/webp" srcset="assets/img/poster-640.webp 640w, assets/img/poster-1024.webp 1024w" sizes="(min-width:900px) 44vw, 90vw">
+          <source type="image/jpeg" srcset="assets/img/poster-640.jpg 640w, assets/img/poster-1024.jpg 1024w" sizes="(min-width:900px) 44vw, 90vw">
+          <img src="assets/img/poster-1024.jpg" width="1024" height="1535" alt="Vortex 84 poster: Juho and Mave in neon sunglasses and 80s jackets under a chrome VORTEX 84 sign, with a T-800 skull, Tetris blocks, a Yamaha DX7 and a synthwave sunset.">
+        </picture>
+        <figcaption>Recovered artifact &middot; origin 1984 &middot; relay 2084</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ THE ANSWER ============ -->
+  <section id="answer">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>01 / The answer</p>
+      <div class="narrow">
+        <p class="lead" data-reveal data-delay="1">
+          The Hitchhiker's Guide to the Galaxy revealed to us that <strong class="neon neon-c" style="font-weight:400">42</strong>
+          is the Answer to Life, the Universe and Everything.
+        </p>
+        <p class="lead dim" data-reveal data-delay="2">
+          But the universe was not prepared for what would happen when two 42s were brought together.
+        </p>
+      </div>
+      <div class="equation" data-reveal>
+        <em class="chrome skew">42</em>
+        <em class="op">+</em>
+        <em class="chrome skew">42</em>
+        <em class="op">=</em>
+        <em class="chrome skew">84</em>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE TEAR ============ -->
+  <section id="tear">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>02 / The tear</p>
+      <div class="narrow center">
+        <p class="lead" data-reveal data-delay="1">
+          A tear has appeared in spacetime, creating a vortex between
+          <strong class="neon neon-c" style="font-weight:400">1984</strong> and
+          <strong class="neon neon-m" style="font-weight:400">2084</strong>.
+        </p>
+      </div>
+      <div class="vortex-stage" data-reveal data-delay="2" aria-hidden="true">
+        <span class="yr-big chrome skew">1984</span>
+        <span class="spinner">
+          <span class="ring r1"></span>
+          <span class="ring r2"></span>
+          <span class="ring r3"></span>
+          <span class="core"></span>
+        </span>
+        <span class="yr-big chrome skew">2084</span>
+      </div>
+      <p class="lead dim center narrow" data-reveal data-delay="3">Perhaps we should have seen it coming.</p>
+    </div>
+  </section>
+
+  <!-- ============ EVIDENCE ============ -->
+  <section id="evidence">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>03 / Evidence</p>
+      <div class="narrow">
+        <h2 data-reveal data-delay="1"><span class="chrome skew">IN 1984</span></h2>
+        <p class="lead dim" data-reveal data-delay="2">
+          Juho and Mave were born, Tetris was created, The Terminator arrived from the future,
+          and the Yamaha DX7 synthesizer provided the soundtrack to the decade.
+        </p>
+      </div>
+
+      <div class="cards">
+        <article class="card" data-reveal>
+          <div class="glyph"><span class="g42 skew">42+42</span></div>
+          <p class="yr">Event 01</p>
+          <h3>Juho &amp; Mave</h3>
+          <p>Two humans enter the timeline. Neither is warned about the other.</p>
+        </article>
+
+        <article class="card" data-reveal data-delay="1">
+          <div class="glyph">
+            <div class="tetris" aria-hidden="true">
+              <i></i><i class="a"></i><i class="a"></i><i></i>
+              <i></i><i class="a"></i><i class="a"></i><i></i>
+              <i class="b"></i><i class="c"></i><i class="c"></i><i class="d"></i>
+            </div>
+          </div>
+          <p class="yr">Event 02</p>
+          <h3>Tetris</h3>
+          <p>Humanity is handed a puzzle it can never finish. It still tries.</p>
+        </article>
+
+        <article class="card" data-reveal data-delay="2">
+          <div class="glyph">
+            <svg class="skull" viewBox="0 0 52 60" aria-hidden="true">
+              <path d="M26 2C13 2 5 11 5 24c0 7 2 11 5 14v8c0 6 7 12 16 12s16-6 16-12v-8c3-3 5-7 5-14C47 11 39 2 26 2z"
+                    fill="none" stroke="#b9c6e6" stroke-width="2"/>
+              <ellipse class="eye" cx="17" cy="26" rx="4.6" ry="5.4"/>
+              <ellipse class="eye" cx="35" cy="26" rx="4.6" ry="5.4"/>
+              <path d="M20 42h12M20 47h12M26 33v7" stroke="#8e9bbd" stroke-width="1.6" fill="none"/>
+            </svg>
+          </div>
+          <p class="yr">Event 03</p>
+          <h3>The Terminator</h3>
+          <p>Arrives from the future. Sets the visual standard for every year after.</p>
+        </article>
+
+        <article class="card" data-reveal data-delay="3">
+          <div class="glyph">
+            <div class="keys" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              <b style="left:7px"></b><b style="left:18px"></b><b style="left:40px"></b><b style="left:51px"></b><b style="left:62px"></b>
+            </div>
+          </div>
+          <p class="yr">Event 04</p>
+          <h3>Yamaha DX7</h3>
+          <p>Provides the soundtrack to the decade. You are hearing its descendants now.</p>
+        </article>
+      </div>
+
+      <div class="narrow">
+        <p class="lead" data-reveal><span class="beat neon neon-c">Coincidence?</span></p>
+        <p class="lead" data-reveal data-delay="1"><span class="beat neon neon-m">We don't think so.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DIAGNOSTICS ============ -->
+  <section id="diagnostics">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>04 / Diagnostics</p>
+      <div class="narrow">
+        <p class="lead" data-reveal data-delay="1">
+          Apparently, 1984 exceeded the universe's recommended maximum level of awesomeness.
+        </p>
+      </div>
+
+      <div class="gauge-wrap" style="margin-top:clamp(26px,5vh,46px)">
+        <svg class="gauge" id="gauge" viewBox="0 0 320 190" role="img" aria-label="Awesomeness gauge, needle past the redline at 184 percent of the recommended maximum">
+          <path class="track" d="M40 152 A 120 120 0 0 1 280 152"/>
+          <path class="safe"  d="M40 152 A 120 120 0 0 1 257 81.5"/>
+          <path class="red"   d="M257 81.5 A 120 120 0 0 1 280 152"/>
+          <g id="ticks"></g>
+          <text class="lbl" x="248" y="66">MAX</text>
+          <g id="needle">
+            <line class="needle" x1="160" y1="152" x2="160" y2="48"/>
+            <circle cx="160" cy="152" r="6" fill="#fff"/>
+          </g>
+        </svg>
+        <div class="readout glitch">
+          <div>System &gt; scanning decade 1984 &hellip; <span class="ok">complete</span></div>
+          <div>Awesomeness level &gt; <b id="pct">000%</b> of recommended maximum</div>
+          <div>Containment &gt; <b>failed</b></div>
+          <div>Consequences &gt; <b>ongoing</b></div>
+        </div>
+      </div>
+
+      <div class="narrow" style="margin-top:clamp(26px,5vh,44px)">
+        <p class="lead" data-reveal>And now we're left to deal with the consequences.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE MISSION ============ -->
+  <section id="mission">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>05 / The mission</p>
+      <div class="narrow">
+        <p class="lead dim" data-reveal data-delay="1">
+          Luckily, the long-lost pages of the Guide reveal one way to close the vortex,
+          restore order and save the world:
+        </p>
+      </div>
+      <div class="terminal" data-reveal data-delay="2" style="margin-top:clamp(20px,4vh,36px)">
+        <header><i></i> Guide entry &middot; recovered fragment &middot; do not lose again</header>
+        <div class="body">
+          <p class="big">Bring together the right people for a hell of a party.</p>
+          <p>&gt; Come prepared.</p>
+          <p>&gt; The fate of the world rests on us now.<span class="cursor"></span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ COORDINATES ============ -->
+  <section id="enter">
+    <div class="wrap center">
+      <p class="eyebrow" data-reveal style="justify-content:center">06 / Coordinates</p>
+      <h2 class="enter-mark" data-reveal data-delay="1"><span class="chrome skew">ENTER<br>VORTEX 84</span></h2>
+      <div class="coords" data-reveal data-delay="2">
+        <span class="l1"><span>Saturday 26.9.2026</span> <span>&middot; 17:00&ndash;04:00</span></span>
+        <span class="l2"><span>Lapinlahdenkatu 16, Helsinki,</span> <span>Building 5</span></span>
+      </div>
+      <div class="countdown" data-reveal data-delay="3">
+        <p class="cd-label">Time until the vortex opens</p>
+        <div class="cd" id="cd-main">
+          <div><b data-cd="d">000</b><s>Days</s></div>
+          <div><b data-cd="h">00</b><s>Hours</s></div>
+          <div><b data-cd="m">00</b><s>Minutes</s></div>
+          <div><b data-cd="s">00</b><s>Seconds</s></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DRESS CODE ============ -->
+  <section id="dress">
+    <div class="wrap center">
+      <p class="eyebrow" data-reveal style="justify-content:center">07 / Protocol</p>
+      <h2 data-reveal data-delay="1"><span class="chrome skew">DRESS CODE</span></h2>
+      <p class="mono" data-reveal data-delay="1" style="font-size:.7rem;letter-spacing:.3em;color:var(--dimmer);text-transform:uppercase;margin-top:-.6em">(optional)</p>
+      <p class="lead" data-reveal data-delay="2" style="margin-top:1.2em">The future never looked this 80s.</p>
+      <div class="chips" data-reveal data-delay="3">
+        <span class="chip" style="--cc:var(--magenta)">80s</span>
+        <span class="chip" style="--cc:var(--cyan)">Neon</span>
+        <span class="chip" style="--cc:#cfe4ff">Chrome</span>
+        <span class="chip" style="--cc:var(--violet)">Leather</span>
+        <span class="chip" style="--cc:var(--pink)">Synthwave</span>
+        <span class="chip" style="--cc:var(--cyan)">Retro Sci-Fi</span>
+        <span class="chip" style="--cc:var(--amber)">Pop Culture</span>
+        <span class="chip" style="--cc:var(--magenta)">Movies</span>
+        <span class="chip" style="--cc:var(--green)">Arcade Aesthetics</span>
+        <span class="chip" style="--cc:var(--orange)">Magnificent Hair</span>
+        <span class="chip" style="--cc:var(--blue)">Sunglasses After Dark</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RSVP ============ -->
+  <section id="rsvp">
+    <div class="wrap center">
+      <p class="eyebrow" data-reveal style="justify-content:center">08 / Confirm</p>
+      <h2 class="panic" data-reveal data-delay="1">
+        <span class="neon neon-c">DON'T PANIC.</span>
+        <span class="neon neon-m">JUST PARTY.</span>
+      </h2>
+      <p data-reveal data-delay="2" style="margin-top:clamp(28px,5vh,46px)">
+        <a class="btn big" id="rsvpbtn" href="#rsvp">RSVP &nbsp;&#9654;</a>
+      </p>
+      <p class="deadline" data-reveal data-delay="3">RSVP by <b>11.9.2026</b></p>
+      <div class="countdown" data-reveal data-delay="3" style="margin-top:18px">
+        <div class="cd small" id="cd-rsvp">
+          <div><b data-cd="d">000</b><s>Days</s></div>
+          <div><b data-cd="h">00</b><s>Hrs</s></div>
+          <div><b data-cd="m">00</b><s>Min</s></div>
+          <div><b data-cd="s">00</b><s>Sec</s></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      Vortex 84 <span>&middot;</span> spacetime anomaly containment unit<br>
+      Transmission origin 2084 <span>&middot;</span> relay 1984 <span>&middot;</span> Helsinki sector<br>
+      Status <span>&middot;</span> vortex stable <span>&middot;</span> awaiting guests
+    </div>
+  </footer>
+</main>
+
+<script>
+/* ============================================================
+   VORTEX 84
+   Two things to swap when you have them:
+   ============================================================ */
+const RSVP_URL  = 'PASTE_RSVP_LINK_HERE';        // <- paste the RSVP form link
+const AUDIO_SRC = 'assets/audio/vortex84.mp3';   // <- drop your track here
+
+const EVENT_AT = '2026-09-26T17:00:00+03:00';    // party starts (Helsinki)
+const RSVP_AT  = '2026-09-11T23:59:59+03:00';    // RSVP deadline
+
+/* ---------- shorthands ---------- */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* energy: 0..1, drives every glow. Fed by the music when there is music,
+   by a slow synthetic pulse when there is not. */
+let energy = 0.25;
+
+/* ============================================================
+   1. RSVP link
+   ============================================================ */
+(function rsvp(){
+  const set = RSVP_URL && !RSVP_URL.startsWith('PASTE_');
+  $$('#rsvpbtn').forEach(a=>{
+    if(set){ a.href = RSVP_URL; a.target = '_blank'; a.rel = 'noopener'; }
+    else{
+      a.href = '#rsvp';
+      a.addEventListener('click', e=>{
+        e.preventDefault();
+        a.innerHTML = 'Link coming soon &nbsp;&#9888;';
+      });
+    }
+  });
+})();
+
+/* ============================================================
+   2. Background canvas: sunset, grid horizon, starfield, ridge
+   ============================================================ */
+(function background(){
+  const cv = $('#bg'), ctx = cv.getContext('2d');
+  let stars=[],ridge=[],phase=0,last=0,lastW=0,lastH=0;
+
+  function makeStars(W,H){
+    const n = Math.min(220, Math.round(W*H/9000));
+    stars = Array.from({length:n},()=>({
+      x:Math.random()*W, y:Math.random()*H*0.72,
+      r:Math.random()*1.25+.25, tw:Math.random()*Math.PI*2,
+      sp:Math.random()*1.8+.4
+    }));
+  }
+  function makeRidge(W){
+    // fixed seed so the skyline does not jump around between rebuilds
+    ridge = [];
+    let x = -40, seed = 1337;
+    const rnd = ()=> (seed = (seed*16807)%2147483647)/2147483647;
+    while(x < W+120){
+      const w = 60 + rnd()*140;
+      ridge.push({x, w, h: 26 + rnd()*88});
+      x += w*0.62;
+    }
+  }
+
+  /* Sized from the element's own box every frame and the transform is re-applied
+     each time, so there is no stale width/height/DPR state to get out of step. */
+  function frame(t){
+    const dt = Math.min(0.05,(t-last)/1000)||0.016; last = t;
+
+    const DPR = Math.min(devicePixelRatio||1, 2);
+    const W = cv.clientWidth || innerWidth;
+    const H = cv.clientHeight || innerHeight;
+    const bw = Math.round(W*DPR), bh = Math.round(H*DPR);
+    if(cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; }
+    if(W !== lastW || H !== lastH){ lastW = W; lastH = H; makeStars(W,H); makeRidge(W); }
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    phase = (phase + dt*(0.12 + energy*0.30)) % 1;
+
+    const hy = H*0.76;                       // horizon, kept low so copy sits above it
+    const cx = W*0.5;
+    const e  = energy;
+
+    ctx.clearRect(0,0,W,H);
+
+    /* sky */
+    let sky = ctx.createLinearGradient(0,0,0,hy);
+    sky.addColorStop(0,'#05020c');
+    sky.addColorStop(.55,'#170a2e');
+    sky.addColorStop(1,'#4a1152');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,hy);
+
+    /* stars */
+    for(const s of stars){
+      s.tw += dt*s.sp;
+      const a = (0.35 + 0.45*Math.sin(s.tw)) * (0.6 + e*0.7);
+      ctx.globalAlpha = Math.max(0,Math.min(1,a));
+      ctx.fillStyle = '#dbe7ff';
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    /* sun */
+    const R = Math.min(W,H)*0.17;
+    const g = ctx.createLinearGradient(0,hy-R,0,hy+R*0.25);
+    g.addColorStop(0,'#ffe36a'); g.addColorStop(.45,'#ff6a1f'); g.addColorStop(1,'#ff2d95');
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,hy,R,Math.PI,0); ctx.closePath();
+    ctx.clip();
+    ctx.fillStyle = g; ctx.fillRect(cx-R,hy-R,R*2,R*1.2);
+    // horizontal slits, thicker toward the bottom
+    ctx.fillStyle = 'rgba(10,3,20,.92)';
+    for(let i=0;i<10;i++){
+      const p = i/10;
+      const y = hy - R + R*Math.pow(p,0.6)*1.02;
+      ctx.fillRect(cx-R, y, R*2, 2 + p*7);
+    }
+    ctx.restore();
+    // sun bloom
+    ctx.globalAlpha = .18 + e*.22;
+    const bl = ctx.createRadialGradient(cx,hy,R*.3,cx,hy,R*2.6);
+    bl.addColorStop(0,'#ff6a1f'); bl.addColorStop(1,'rgba(255,106,31,0)');
+    ctx.fillStyle = bl; ctx.fillRect(0,0,W,hy+R);
+    ctx.globalAlpha = 1;
+
+    /* mountain ridge */
+    ctx.fillStyle = '#180a2b';
+    ctx.beginPath(); ctx.moveTo(-40,hy);
+    for(const m of ridge){ ctx.lineTo(m.x+m.w*0.5, hy-m.h); ctx.lineTo(m.x+m.w, hy); }
+    ctx.lineTo(W+80,hy); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,45,149,'+(0.30+e*0.35)+')';
+    ctx.lineWidth = 1.2; ctx.stroke();
+
+    /* ground */
+    let gr = ctx.createLinearGradient(0,hy,0,H);
+    gr.addColorStop(0,'#12061f'); gr.addColorStop(1,'#05020c');
+    ctx.fillStyle = gr; ctx.fillRect(0,hy,W,H-hy);
+
+    /* grid: horizontals sliding toward the viewer */
+    const ROWS = 18, depth = H-hy;
+    ctx.lineWidth = 1;
+    for(let i=0;i<ROWS;i++){
+      const p = (i+phase)/ROWS;
+      const y = hy + depth*Math.pow(p,2.7);
+      const a = (0.10 + 0.55*p) * (0.55 + e*0.7);
+      ctx.strokeStyle = 'rgba(34,211,238,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+    /* grid: verticals converging on the vanishing point */
+    const SP = Math.max(60, W/9);
+    for(let k=-14;k<=14;k++){
+      const a = (0.30 - Math.abs(k)*0.016) * (0.55 + e*0.7);
+      if(a<=0) continue;
+      ctx.strokeStyle = 'rgba(255,45,149,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(cx,hy); ctx.lineTo(cx + k*SP, H); ctx.stroke();
+    }
+    /* horizon glow line */
+    ctx.strokeStyle = 'rgba(255,255,255,'+(0.30+e*0.45)+')';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(0,hy); ctx.lineTo(W,hy); ctx.stroke();
+
+    if(!REDUCED) requestAnimationFrame(frame);
+  }
+
+  if(REDUCED){
+    energy = 0.32;
+    frame(performance.now());
+    addEventListener('resize', ()=>frame(performance.now()), {passive:true});
+  }else{
+    requestAnimationFrame(frame);
+  }
+})();
+
+/* ============================================================
+   3. Audio: probe the file, gate on a click, analyse for energy
+   ============================================================ */
+const Audio84 = (function(){
+  const el = $('#track'), btn = $('#audiobtn'), lbl = $('#audiolabel');
+  const bars = $$('.eq i', btn);
+  let available = false, ctxA = null, analyser = null, gain = null, data = null;
+  let playing = false, synth = 0;
+
+  /* is there a track in the repo? */
+  const ready = fetch(AUDIO_SRC, {method:'HEAD'})
+    .then(r => { available = r.ok; return available; })
+    .catch(() => { available = false; return false; });
+
+  function wire(){
+    if(ctxA) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    ctxA = new AC();
+    const src = ctxA.createMediaElementSource(el);
+    analyser = ctxA.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.78;
+    gain = ctxA.createGain();
+    gain.gain.value = 0.55;
+    src.connect(analyser); analyser.connect(gain); gain.connect(ctxA.destination);
+    data = new Uint8Array(analyser.frequencyBinCount);
+  }
+
+  async function start(){
+    if(!available) return false;
+    el.src = AUDIO_SRC;
+    el.loop = true;
+    try{
+      wire();
+      if(ctxA && ctxA.state === 'suspended') await ctxA.resume();
+      await el.play();
+      playing = true;
+      btn.classList.add('on');
+      setMuted(recalled());
+      return true;
+    }catch(err){
+      /* autoplay refused or decode failed: leave the page silent but intact */
+      btn.classList.add('on');
+      setMuted(true);
+      return false;
+    }
+  }
+
+  /* remember the mute choice; storage can throw in private windows */
+  function remember(m){ try{ localStorage.setItem('vortex84.muted', m ? '1' : '0'); }catch(e){} }
+  function recalled(){ try{ return localStorage.getItem('vortex84.muted') === '1'; }catch(e){ return false; } }
+
+  function setMuted(m){
+    el.muted = m;
+    btn.classList.toggle('muted', m);
+    btn.setAttribute('aria-pressed', String(!m));
+    lbl.textContent = m ? 'Audio off' : 'Audio on';
+    remember(m);
+  }
+
+  btn.addEventListener('click', async ()=>{
+    if(!playing){ await start(); return; }
+    const m = !el.muted;
+    setMuted(m);
+    if(!m && ctxA && ctxA.state === 'suspended') ctxA.resume();
+    if(!m && el.paused) el.play().catch(()=>{});
+  });
+
+  /* volume swells as you get deeper into the page */
+  function scrollGain(){
+    if(!gain) return;
+    const max = document.body.scrollHeight - innerHeight;
+    const p = max > 0 ? Math.min(1, scrollY / max) : 0;
+    gain.gain.value = 0.42 + p*0.38;
+  }
+  addEventListener('scroll', scrollGain, {passive:true});
+
+  /* the energy loop: real spectrum when playing, gentle pulse when not */
+  (function tick(){
+    if(analyser && playing && !el.muted && !el.paused){
+      analyser.getByteFrequencyData(data);
+      let bass = 0; for(let i=1;i<10;i++) bass += data[i];
+      bass /= 9*255;
+      let mid = 0; for(let i=10;i<40;i++) mid += data[i];
+      mid /= 30*255;
+      const level = Math.min(1, bass*0.85 + mid*0.45);
+      energy += (level - energy) * 0.22;
+      bars.forEach((b,i)=>{
+        const v = data[3 + i*7] / 255;
+        b.style.height = (18 + v*82) + '%';
+      });
+    }else{
+      synth += 0.016;
+      const level = 0.24 + 0.12*Math.sin(synth*1.7) + 0.06*Math.sin(synth*3.9);
+      energy += (level - energy) * 0.06;
+    }
+    requestAnimationFrame(tick);
+  })();
+
+  return { ready, start, isAvailable: ()=>available };
+})();
+
+/* ============================================================
+   4. Airlock: boot text, then let people in
+   ============================================================ */
+(function airlock(){
+  const gate = $('#airlock'), boot = $('#boot');
+  const engage = $('#engage'), silent = $('#silent');
+
+  const lines = [
+    ['> establishing link .......... ok', 0],
+    ['> source: 2084  relay: 1984', 0],
+    ['INCOMING TRANSMISSION FROM 2084', 1],
+    ['ANOMALY DETECTED IN THE SPACE-TIME CONTINUUM', 1]
+  ];
+
+  function open(){
+    gate.classList.add('gone');
+    document.body.classList.remove('locked');
+    setTimeout(()=>{ gate.remove(); }, 1000);
+  }
+
+  engage.addEventListener('click', async ()=>{ await Audio84.start(); open(); });
+  silent.addEventListener('click', open);
+
+  /* only offer the audio button if a track actually exists */
+  Audio84.ready.then(ok=>{
+    if(ok){ engage.hidden = false; silent.textContent = 'Enter in silence'; }
+    else  { engage.hidden = true;  silent.textContent = 'Enter the vortex'; silent.classList.remove('ghost'); silent.classList.add('cy','big'); }
+  });
+
+  function finish(){
+    boot.innerHTML = lines.map(l=>'<div class="ln'+(l[1]?' hi':'')+'">'+l[0]+'</div>').join('');
+    gate.classList.add('ready');
+  }
+
+  if(REDUCED){ finish(); return; }
+
+  /* typewriter, with click-anywhere to skip ahead */
+  let li = 0, done = false;
+  function nextLine(){
+    if(done) return;
+    if(li >= lines.length){ done = true; gate.classList.add('ready'); return; }
+    const [text, hi] = lines[li++];
+    const div = document.createElement('div');
+    div.className = 'ln' + (hi ? ' hi' : '');
+    boot.appendChild(div);
+    let ci = 0;
+    const speed = hi ? 22 : 11;
+    (function type(){
+      if(done) return;
+      div.textContent = text.slice(0, ++ci);
+      if(ci < text.length) setTimeout(type, speed);
+      else setTimeout(nextLine, hi ? 260 : 110);
+    })();
+  }
+  gate.addEventListener('click', e=>{
+    if(done || e.target.closest('.btn')) return;
+    done = true; finish();
+  });
+  setTimeout(nextLine, 260);
+})();
+
+/* ============================================================
+   5. Scroll reveal + sticky bar
+   ============================================================ */
+(function reveal(){
+  const io = new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, {rootMargin:'0px 0px -12% 0px', threshold:0.12});
+  $$('[data-reveal]').forEach(el=>io.observe(el));
+
+  /* equation + gauge get their own trigger so the animations fire once, in view */
+  const eq = $('.equation'), gauge = $('#gauge');
+  const io2 = new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting) return;
+      e.target.classList.add('in');
+      if(e.target === gauge) countUp();
+      io2.unobserve(e.target);
+    });
+  }, {threshold:0.4});
+  if(eq) io2.observe(eq);
+  if(gauge) io2.observe(gauge);
+
+  const bar = $('#bar');
+  addEventListener('scroll', ()=>{
+    bar.classList.toggle('show', scrollY > innerHeight*0.85);
+  }, {passive:true});
+})();
+
+/* gauge ticks + percentage count-up */
+(function gaugeTicks(){
+  const g = $('#ticks');
+  if(!g) return;
+  for(let i=0;i<=10;i++){
+    const t = i/10, a = Math.PI*(1+t);
+    const x1 = 160 + Math.cos(a)*108, y1 = 152 + Math.sin(a)*108;
+    const x2 = 160 + Math.cos(a)*96,  y2 = 152 + Math.sin(a)*96;
+    const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('class','tick');
+    ln.setAttribute('x1',x1.toFixed(1)); ln.setAttribute('y1',y1.toFixed(1));
+    ln.setAttribute('x2',x2.toFixed(1)); ln.setAttribute('y2',y2.toFixed(1));
+    g.appendChild(ln);
+  }
+})();
+
+function countUp(){
+  const out = $('#pct');
+  if(!out) return;
+  if(REDUCED){ out.textContent = '184%'; return; }
+  const target = 184;
+  let v = 0, t0 = performance.now();
+  (function step(now){
+    const p = Math.min(1,(now-t0)/2300);
+    v = Math.round(target * (1 - Math.pow(1-p,3)));
+    out.textContent = String(v).padStart(3,'0') + '%';
+    if(p<1) requestAnimationFrame(step);
+  })(t0);
+}
+
+/* ============================================================
+   6. Countdowns
+   ============================================================ */
+(function countdowns(){
+  const targets = [
+    {root: $('#cd-main'), at: new Date(EVENT_AT).getTime(), done: 'The vortex is open.'},
+    {root: $('#cd-rsvp'), at: new Date(RSVP_AT).getTime(),  done: 'RSVP window closed.'}
+  ].filter(t=>t.root);
+
+  function pad(n,l=2){ return String(Math.max(0,n)).padStart(l,'0'); }
+
+  function tick(){
+    const now = Date.now();
+    for(const t of targets){
+      let ms = t.at - now;
+      if(ms <= 0){
+        t.root.innerHTML = '<div style="min-width:auto;padding:14px 22px"><b style="font-size:clamp(1rem,3.4vw,1.5rem)">'+t.done+'</b></div>';
+        continue;
+      }
+      const s = Math.floor(ms/1000);
+      const set = (k,v,l)=>{ const n = t.root.querySelector('[data-cd="'+k+'"]'); if(n) n.textContent = pad(v,l); };
+      set('d', Math.floor(s/86400), 3);
+      set('h', Math.floor(s/3600)%24, 2);
+      set('m', Math.floor(s/60)%60, 2);
+      set('s', s%60, 2);
+    }
+  }
+  tick(); setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
