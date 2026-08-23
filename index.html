@@ -48,6 +48,9 @@
 
 *,*::before,*::after{box-sizing:border-box}
 
+/* author display rules outrank the UA sheet's [hidden], so restate it */
+[hidden]{display:none!important}
+
 html,body{margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 
