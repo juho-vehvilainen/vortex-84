@@ -961,7 +961,18 @@ footer span{color:var(--magenta)}
    Two things to swap when you have them:
    ============================================================ */
 const RSVP_URL  = 'PASTE_RSVP_LINK_HERE';        // <- paste the RSVP form link
-const AUDIO_SRC = 'assets/audio/turtlebeats-dark-synthwave-spectral-251688.mp3';
+/* AAC first: half the bytes of the MP3 at the same perceived quality, so the
+   music starts sooner on mobile data. MP3 stays as the fallback for anything
+   that cannot decode AAC, so no visitor is left silent. */
+const AUDIO_SOURCES = [
+  {src:'assets/audio/turtlebeats-dark-synthwave-spectral-251688.m4a', type:'audio/mp4; codecs="mp4a.40.2"'},
+  {src:'assets/audio/turtlebeats-dark-synthwave-spectral-251688.mp3', type:'audio/mpeg'}
+];
+const AUDIO_SRC = (()=>{
+  const probe = document.createElement('audio');
+  const pick = AUDIO_SOURCES.find(s => probe.canPlayType && probe.canPlayType(s.type) !== '');
+  return (pick || AUDIO_SOURCES[AUDIO_SOURCES.length - 1]).src;
+})();
 
 const EVENT_AT = '2026-09-26T17:00:00+03:00';    // party starts (Helsinki)
 const RSVP_AT  = '2026-09-11T23:59:59+03:00';    // RSVP deadline

@@ -13,16 +13,26 @@ Both are constants at the top of the `<script>` block in `index.html`:
 
 ```js
 const RSVP_URL  = 'PASTE_RSVP_LINK_HERE';        // the RSVP form link
-const AUDIO_SRC = 'assets/audio/turtlebeats-dark-synthwave-spectral-251688.mp3';
+const AUDIO_SOURCES = [ ...m4a, ...mp3 ];   // the party track, best format first
 ```
 
 **RSVP link.** Until a real URL is in there, the RSVP button stays on the page
 but changes to "Link coming soon" when clicked instead of going nowhere. Paste
 the form link and it becomes a normal button that opens in a new tab.
 
-**Music.** Currently pointing at the Turtlebeats "Dark Synthwave Spectral" track
-in `assets/audio/` (2:00, 256 kbps, 3.8 MB). To swap it, drop a new file in that
-folder and change `AUDIO_SRC` to match the filename.
+**Music.** Currently the Turtlebeats "Dark Synthwave Spectral" track, 2:00 long,
+in `assets/audio/`. It ships twice: AAC at 128 kbps (1.9 MB) and the original
+MP3 at 256 kbps (3.8 MB). The page checks `canPlayType` and takes the AAC, which
+halves the download so the music starts sooner on mobile data; the MP3 is the
+fallback for anything that cannot decode AAC. To swap the track, drop new files
+in that folder and update the `AUDIO_SOURCES` list. A single entry is fine.
+
+macOS has no MP3 encoder, so the smaller file was made with `afconvert`:
+
+```bash
+afconvert -f WAVE -d LEI16 track.mp3 track.wav
+afconvert -f m4af -d aac -b 128000 -s 2 track.wav track.m4a
+```
 
 The page probes for that file on load and adapts:
 
