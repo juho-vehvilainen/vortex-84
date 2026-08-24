@@ -1146,7 +1146,7 @@ const Audio84 = (function(){
   const el = $('#track'), btn = $('#audiobtn'), lbl = $('#audiolabel');
   const bars = $$('.eq i', btn);
   let available = false, ctxA = null, analyser = null, gain = null, data = null;
-  let playing = false, synth = 0;
+  let playing = false, synth = 0, muted = false;
 
   /* is there a track in the repo? */
   const ready = fetch(AUDIO_SRC, {method:'HEAD'})
@@ -1180,7 +1180,7 @@ const Audio84 = (function(){
       playing = true;
       btn.classList.add('on');
       setMuted(recalled());
-      if(!el.muted) ringerHint();
+      if(!muted) ringerHint();
       return true;
     }catch(err){
       /* autoplay refused or decode failed: leave the page silent but intact */
@@ -1194,8 +1194,30 @@ const Audio84 = (function(){
   function remember(m){ try{ localStorage.setItem('vortex84.muted', m ? '1' : '0'); }catch(e){} }
   function recalled(){ try{ return localStorage.getItem('vortex84.muted') === '1'; }catch(e){ return false; } }
 
+  /* How loud it should be right now, ignoring mute: swells with scroll depth. */
+  function scrollVolume(){
+    const max = document.body.scrollHeight - innerHeight;
+    const p = max > 0 ? Math.min(1, scrollY / max) : 0;
+    return 0.42 + p*0.38;
+  }
+
+  /* Ramp the gain node to the current target. Muting here rather than on the
+     media element matters: iOS Safari decodes far ahead into the Web Audio
+     pipeline, so el.muted takes seconds to become audible while everything
+     already buffered downstream drains. The gain node sits after that buffer,
+     so it responds within a render quantum. The short ramp avoids a click. */
+  function applyGain(seconds){
+    if(!gain || !ctxA) return;
+    const t = ctxA.currentTime;
+    gain.gain.cancelScheduledValues(t);
+    gain.gain.setValueAtTime(gain.gain.value, t);
+    gain.gain.linearRampToValueAtTime(muted ? 0 : scrollVolume(), t + seconds);
+  }
+
   function setMuted(m){
-    el.muted = m;
+    muted = m;
+    if(gain && ctxA) applyGain(0.05);
+    else el.muted = m;                  // no Web Audio graph: fall back to the element
     btn.classList.toggle('muted', m);
     btn.setAttribute('aria-pressed', String(!m));
     lbl.textContent = m ? 'Audio off' : 'Audio on';
@@ -1216,24 +1238,19 @@ const Audio84 = (function(){
 
   btn.addEventListener('click', async ()=>{
     if(!playing){ await start(); return; }
-    const m = !el.muted;
+    const m = !muted;
     setMuted(m);
     if(!m && ctxA && ctxA.state === 'suspended') ctxA.resume();
     if(!m && el.paused) el.play().catch(()=>{});
   });
 
-  /* volume swells as you get deeper into the page */
-  function scrollGain(){
-    if(!gain) return;
-    const max = document.body.scrollHeight - innerHeight;
-    const p = max > 0 ? Math.min(1, scrollY / max) : 0;
-    gain.gain.value = 0.42 + p*0.38;
-  }
-  addEventListener('scroll', scrollGain, {passive:true});
+  /* Skip while muted: each scroll event would otherwise restart a ramp toward
+     zero from the current value, so it would creep down instead of landing. */
+  addEventListener('scroll', ()=>{ if(!muted) applyGain(0.25); }, {passive:true});
 
   /* the energy loop: real spectrum when playing, gentle pulse when not */
   (function tick(){
-    if(analyser && playing && !el.muted && !el.paused){
+    if(analyser && playing && !muted && !el.paused){
       analyser.getByteFrequencyData(data);
       let bass = 0; for(let i=1;i<10;i++) bass += data[i];
       bass /= 9*255;
