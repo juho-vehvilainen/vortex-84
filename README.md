@@ -2,7 +2,7 @@
 
 Birthday invitation site for Juho and Mave's combined 42nd (42 + 42 = 84).
 
-**Saturday 26.9.2026 · 17:00–04:00 · Lapinlahdenkatu 16, Helsinki, Building 5**
+**Saturday 26.9.2026 · 17:00–04:00 · Maria 01 - Building 5 (Arcade), Lapinlahdenkatu 16, 00180 Helsinki**
 
 Single-file static site. No build step, no dependencies. Open `index.html` in a
 browser and it works.
