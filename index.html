@@ -542,8 +542,19 @@ section{position:relative;padding:clamp(76px,13vh,150px) 0}
   text-align:left;
 }
 .coords .l1{font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(1.05rem,3.4vw,1.6rem);letter-spacing:.04em;color:#fff}
-.coords .l2{font-family:'Share Tech Mono',monospace;font-size:clamp(.8rem,2.2vw,1rem);letter-spacing:.12em;color:var(--cyan)}
+.coords .l2{font-family:'Share Tech Mono',monospace;font-size:clamp(.8rem,2.2vw,1rem);letter-spacing:.12em;color:var(--cyan);line-height:2}
 .coords .l1 span,.coords .l2 span{white-space:nowrap}
+.coords a{
+  color:inherit;text-decoration:underline;text-decoration-style:dotted;
+  text-decoration-color:rgba(34,211,238,.45);text-underline-offset:.3em;
+  transition:color .2s ease,text-decoration-color .2s ease,text-shadow .2s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.coords a:hover,.coords a:focus-visible{
+  color:#fff;text-decoration-color:var(--cyan);
+  text-shadow:0 0 12px rgba(34,211,238,.85);outline:none;
+}
+.coords a i{font-style:normal;font-size:.9em;opacity:.75}
 
 .countdown{margin:clamp(26px,5vh,48px) 0 0}
 .cd-label{
@@ -907,7 +918,7 @@ footer span{color:var(--magenta)}
       <h2 class="enter-mark" data-reveal data-delay="1"><span class="chrome skew">ENTER<br>VORTEX 84</span></h2>
       <div class="coords" data-reveal data-delay="2">
         <span class="l1"><span>Saturday 26.9.2026 &middot;</span> <span>17:00&ndash;04:00</span></span>
-        <span class="l2"><span>Maria 01 - Building 5 (Arcade),</span> <span>Lapinlahdenkatu 16,</span> <span>00180 Helsinki</span></span>
+        <span class="l2"><a href="https://maps.app.goo.gl/mCZcyC9MDoN1MiKBA" target="_blank" rel="noopener noreferrer"><span>Maria 01 - Building 5 (Arcade),</span> <span>Lapinlahdenkatu 16,</span> <span>00180&nbsp;Helsinki&nbsp;<i aria-hidden="true">&#8599;</i></span></a></span>
       </div>
       <div class="countdown" data-reveal data-delay="3">
         <p class="cd-label">Time until the vortex opens</p>
