@@ -13,14 +13,16 @@ Both are constants at the top of the `<script>` block in `index.html`:
 
 ```js
 const RSVP_URL  = 'PASTE_RSVP_LINK_HERE';        // the RSVP form link
-const AUDIO_SRC = 'assets/audio/vortex84.mp3';   // the party track
+const AUDIO_SRC = 'assets/audio/turtlebeats-dark-synthwave-spectral-251688.mp3';
 ```
 
 **RSVP link.** Until a real URL is in there, the RSVP button stays on the page
 but changes to "Link coming soon" when clicked instead of going nowhere. Paste
 the form link and it becomes a normal button that opens in a new tab.
 
-**Music.** Drop an MP3 at `assets/audio/vortex84.mp3`. Nothing else to change.
+**Music.** Currently pointing at the Turtlebeats "Dark Synthwave Spectral" track
+in `assets/audio/` (2:00, 256 kbps, 3.8 MB). To swap it, drop a new file in that
+folder and change `AUDIO_SRC` to match the filename.
 
 The page probes for that file on load and adapts:
 
@@ -35,6 +37,13 @@ The page probes for that file on load and adapts:
 No browser will start audio on scroll alone, so that first click on the entry
 screen is what unlocks it. That is a browser rule, not a choice. A visitor's
 mute preference is remembered in `localStorage`.
+
+On iPhones the audio is routed through Web Audio so the visuals can react to the
+beat, and iOS silences Web Audio when the physical ringer switch is off. Nothing
+in the page can detect that, so a one-off "check the ringer switch" note appears
+next to the toggle on iOS. If that turns out to be a real problem for guests, the
+fix is to play the audio element directly on iOS and fall back to the synthetic
+pulse for the visuals there.
 
 Any format the browser can decode works. To use something other than an MP3,
 point `AUDIO_SRC` at it.

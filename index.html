@@ -283,7 +283,9 @@ section{position:relative;padding:clamp(76px,13vh,150px) 0}
 
 /* ---------- audio toggle ---------- */
 #audiobtn{
-  position:fixed;right:calc(var(--pad) * .7);bottom:calc(var(--pad) * .7);z-index:45;
+  position:fixed;z-index:45;
+  right:calc(var(--pad) * .7 + env(safe-area-inset-right, 0px));
+  bottom:calc(var(--pad) * .7 + env(safe-area-inset-bottom, 0px));
   display:none;align-items:center;gap:.6em;
   font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:.16em;
   color:var(--cyan);background:rgba(5,2,12,.72);
@@ -299,6 +301,20 @@ section{position:relative;padding:clamp(76px,13vh,150px) 0}
 .eq{display:flex;align-items:flex-end;gap:2px;height:12px;width:16px}
 .eq i{flex:1;background:currentColor;height:30%;border-radius:1px;transition:height .09s linear}
 #audiobtn.muted .eq i{height:14%!important}
+
+/* iPhones silence Web Audio when the ringer switch is off, and nothing in the
+   page can detect that, so say it out loud rather than look broken. */
+#ringerhint{
+  position:fixed;z-index:45;
+  right:calc(var(--pad) * .7 + env(safe-area-inset-right, 0px));
+  bottom:calc(var(--pad) * .7 + 46px + env(safe-area-inset-bottom, 0px));
+  margin:0;max-width:min(230px,64vw);
+  font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.1em;line-height:1.6;
+  color:var(--amber);text-align:right;
+  text-shadow:0 1px 2px rgba(5,2,12,.95),0 0 14px rgba(255,176,32,.55);
+  animation:hintfade .5s ease both;
+}
+@keyframes hintfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 /* ============================================================
    Hero
@@ -652,6 +668,7 @@ footer span{color:var(--magenta)}
   <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
   <span id="audiolabel">Audio on</span>
 </button>
+<p id="ringerhint" hidden>No sound? Check the ringer switch.</p>
 
 <audio id="track" loop preload="none" crossorigin="anonymous"></audio>
 
@@ -944,7 +961,7 @@ footer span{color:var(--magenta)}
    Two things to swap when you have them:
    ============================================================ */
 const RSVP_URL  = 'PASTE_RSVP_LINK_HERE';        // <- paste the RSVP form link
-const AUDIO_SRC = 'assets/audio/vortex84.mp3';   // <- drop your track here
+const AUDIO_SRC = 'assets/audio/turtlebeats-dark-synthwave-spectral-251688.mp3';
 
 const EVENT_AT = '2026-09-26T17:00:00+03:00';    // party starts (Helsinki)
 const RSVP_AT  = '2026-09-11T23:59:59+03:00';    // RSVP deadline
@@ -1145,12 +1162,14 @@ const Audio84 = (function(){
     el.src = AUDIO_SRC;
     el.loop = true;
     try{
-      wire();
-      if(ctxA && ctxA.state === 'suspended') await ctxA.resume();
-      await el.play();
+      wire();                                    // sync: context built inside the tap
+      const started = el.play();                 // sync: iOS still sees this as the tap
+      if(ctxA && ctxA.state === 'suspended') ctxA.resume().catch(()=>{});
+      await started;
       playing = true;
       btn.classList.add('on');
       setMuted(recalled());
+      if(!el.muted) ringerHint();
       return true;
     }catch(err){
       /* autoplay refused or decode failed: leave the page silent but intact */
@@ -1170,6 +1189,18 @@ const Audio84 = (function(){
     btn.setAttribute('aria-pressed', String(!m));
     lbl.textContent = m ? 'Audio off' : 'Audio on';
     remember(m);
+  }
+
+  /* iOS silences Web Audio output when the ringer switch is off; it cannot be
+     detected, so surface it once after the track starts on those devices. */
+  function ringerHint(){
+    const iOS = /iP(hone|ad|od)/.test(navigator.platform)
+             || (/Mac/.test(navigator.userAgent) && 'ontouchend' in document);
+    if(!iOS) return;
+    const hint = $('#ringerhint');
+    if(!hint) return;
+    hint.hidden = false;
+    setTimeout(()=>{ hint.hidden = true; }, 9000);
   }
 
   btn.addEventListener('click', async ()=>{
