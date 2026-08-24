@@ -305,7 +305,7 @@ section{position:relative;padding:clamp(76px,13vh,150px) 0}
 /* iPhones silence Web Audio when the ringer switch is off, and nothing in the
    page can detect that, so say it out loud rather than look broken. */
 #ringerhint{
-  position:fixed;z-index:45;
+  position:fixed;z-index:45;pointer-events:none;   /* a note, never a tap target */
   right:calc(var(--pad) * .7 + env(safe-area-inset-right, 0px));
   bottom:calc(var(--pad) * .7 + 46px + env(safe-area-inset-bottom, 0px));
   margin:0;max-width:min(230px,64vw);
