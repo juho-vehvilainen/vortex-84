@@ -1002,7 +1002,7 @@ footer span{color:var(--magenta)}
    VORTEX 84
    Two things to swap when you have them:
    ============================================================ */
-const RSVP_URL  = 'PASTE_RSVP_LINK_HERE';        // <- paste the RSVP form link
+const RSVP_URL  = 'https://forms.gle/jFSkXc9KAy4bLra2A';
 /* AAC first: half the bytes of the MP3 at the same perceived quality, so the
    music starts sooner on mobile data. MP3 stays as the fallback for anything
    that cannot decode AAC, so no visitor is left silent. */
@@ -1034,7 +1034,7 @@ let energy = 0.25;
 (function rsvp(){
   const set = RSVP_URL && !RSVP_URL.startsWith('PASTE_');
   $$('#rsvpbtn').forEach(a=>{
-    if(set){ a.href = RSVP_URL; a.target = '_blank'; a.rel = 'noopener'; }
+    if(set){ a.href = RSVP_URL; a.target = '_blank'; a.rel = 'noopener noreferrer'; }
     else{
       a.href = '#rsvp';
       a.addEventListener('click', e=>{

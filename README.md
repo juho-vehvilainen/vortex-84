@@ -12,13 +12,13 @@ browser and it works.
 Both are constants at the top of the `<script>` block in `index.html`:
 
 ```js
-const RSVP_URL  = 'PASTE_RSVP_LINK_HERE';        // the RSVP form link
+const RSVP_URL  = 'https://forms.gle/jFSkXc9KAy4bLra2A';   // the RSVP form
 const AUDIO_SOURCES = [ ...m4a, ...mp3 ];   // the party track, best format first
 ```
 
-**RSVP link.** Until a real URL is in there, the RSVP button stays on the page
-but changes to "Link coming soon" when clicked instead of going nowhere. Paste
-the form link and it becomes a normal button that opens in a new tab.
+**RSVP link.** Points at the Google Form. If `RSVP_URL` is ever cleared back to
+a placeholder, the button stays on the page but changes to "Link coming soon" when
+clicked rather than going nowhere.
 
 **Music.** Currently the Turtlebeats "Dark Synthwave Spectral" track, 2:00 long,
 in `assets/audio/`. It ships twice: AAC at 128 kbps (1.9 MB) and the original
