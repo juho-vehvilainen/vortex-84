@@ -12,7 +12,7 @@ browser and it works.
 Both are constants at the top of the `<script>` block in `index.html`:
 
 ```js
-const RSVP_URL  = 'https://forms.gle/jFSkXc9KAy4bLra2A';   // the RSVP form
+const RSVP_URL  = 'https://docs.google.com/forms/d/e/1FAIpQLScfTc7w9iljZTVT0kBQk-6WGRkPTFexFSuM2TLafV1_cMkSIQ/viewform';   // the RSVP form
 const AUDIO_SOURCES = [ ...m4a, ...mp3 ];   // the party track, best format first
 ```
 
