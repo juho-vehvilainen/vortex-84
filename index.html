@@ -605,13 +605,6 @@ section{position:relative;padding:clamp(76px,13vh,150px) 0}
   font-size:clamp(2.2rem,11vw,5.6rem);line-height:.9;margin:0;
 }
 .panic span{display:block}
-.deadline{
-  font-family:'Share Tech Mono',monospace;font-size:.74rem;letter-spacing:.22em;
-  color:var(--dim);text-transform:uppercase;margin-top:22px;
-}
-.deadline b{color:var(--amber);font-weight:400;text-shadow:0 0 12px rgba(255,176,32,.7)}
-.cd.small div{min-width:clamp(52px,12vw,72px);padding:9px 6px 7px;border-color:rgba(255,176,32,.3);background:linear-gradient(180deg,rgba(255,176,32,.12),rgba(8,3,18,.84));box-shadow:none}
-.cd.small b{font-size:clamp(1rem,3.6vw,1.5rem);text-shadow:0 0 10px rgba(255,176,32,.8)}
 
 /* ============================================================
    P.S. — deliberately breaks the numbered-section pattern, and stays quieter
@@ -651,7 +644,7 @@ footer span{color:var(--magenta)}
    halo. Declared last so it lands on top of the block styles above, while the
    more specific neon/glow rules inside these blocks still win.
    ============================================================ */
-.lead,.eyebrow,.hero-sub,.readout,.deadline,.cd-label,.card p,.card .yr,
+.lead,.eyebrow,.hero-sub,.readout,.cd-label,.card p,.card .yr,
 .coords .l1,.coords .l2,footer,.scrollcue,.poster figcaption,.chip{
   text-shadow:0 1px 2px rgba(5,2,12,.92),0 2px 18px rgba(5,2,12,.85);
 }
@@ -967,15 +960,6 @@ footer span{color:var(--magenta)}
       <p data-reveal data-delay="2" style="margin-top:clamp(28px,5vh,46px)">
         <a class="btn big" id="rsvpbtn" href="#rsvp">RSVP &nbsp;&#9654;</a>
       </p>
-      <p class="deadline" data-reveal data-delay="3">RSVP by <b>11.9.2026</b></p>
-      <div class="countdown" data-reveal data-delay="3" style="margin-top:18px">
-        <div class="cd small" id="cd-rsvp">
-          <div><b data-cd="d">000</b><s>Days</s></div>
-          <div><b data-cd="h">00</b><s>Hrs</s></div>
-          <div><b data-cd="m">00</b><s>Min</s></div>
-          <div><b data-cd="s">00</b><s>Sec</s></div>
-        </div>
-      </div>
 
       <div class="ps" data-reveal>
         <hr class="rule">
@@ -1023,7 +1007,6 @@ const AUDIO_SRC = (()=>{
 })();
 
 const EVENT_AT = '2026-09-26T17:00:00+03:00';    // party starts (Helsinki)
-const RSVP_AT  = '2026-09-11T23:59:59+03:00';    // RSVP deadline
 
 /* ---------- shorthands ---------- */
 const $  = (s,r=document)=>r.querySelector(s);
@@ -1447,8 +1430,7 @@ function countUp(){
    ============================================================ */
 (function countdowns(){
   const targets = [
-    {root: $('#cd-main'), at: new Date(EVENT_AT).getTime(), done: 'The vortex is open.'},
-    {root: $('#cd-rsvp'), at: new Date(RSVP_AT).getTime(),  done: 'RSVP window closed.'}
+    {root: $('#cd-main'), at: new Date(EVENT_AT).getTime(), done: 'The vortex is open.'}
   ].filter(t=>t.root);
 
   function pad(n,l=2){ return String(Math.max(0,n)).padStart(l,'0'); }

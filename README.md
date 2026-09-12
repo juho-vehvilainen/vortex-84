@@ -104,8 +104,9 @@ PY
 
 ## Notes
 
-- Countdowns target `2026-09-26T17:00+03:00` (party) and `2026-09-11T23:59+03:00`
-  (RSVP deadline). Helsinki is UTC+3 on both dates.
+- The countdown targets `2026-09-26T17:00+03:00` (party start). Helsinki is UTC+3
+  on that date. The RSVP-deadline line and its countdown were removed on
+  2026-09-12 after the deadline passed.
 - Honours `prefers-reduced-motion`: animation stops, everything stays readable.
 - Local preview: `python3 -m http.server 8084`, then open
   `http://127.0.0.1:8084`. Use a server rather than opening the file directly,
