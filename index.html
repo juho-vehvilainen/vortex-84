@@ -629,6 +629,39 @@ section{position:relative;padding:clamp(76px,13vh,150px) 0}
 }
 
 /* ============================================================
+   Briefing — practical info added 23.9.2026: schedule, drinks, food truck
+   menu, playlist. Sits after the RSVP so the CTA still lands first.
+   ============================================================ */
+#briefing{padding-top:0;padding-bottom:clamp(70px,11vh,130px)}
+#briefing .wrap>.rule{margin-bottom:clamp(60px,10vh,110px)}
+.brief{display:grid;gap:clamp(14px,2.4vw,22px);grid-template-columns:1fr;margin-top:clamp(30px,5vh,52px);text-align:left}
+@media (min-width:800px){.brief{grid-template-columns:1fr 1fr}.brief .span2{grid-column:1 / -1}}
+.brief .card:hover{transform:none;border-color:rgba(165,150,207,.2);box-shadow:none}
+.brief .card h3{margin:.2em 0 .6em;color:#fff}
+.brief .card p{font-size:.94rem;line-height:1.65}
+.brief .card p+p{margin-top:.8em}
+.brief .card .yr{color:var(--cc,var(--cyan));text-shadow:0 0 10px var(--cc,var(--cyan))}
+.brief .card a{color:#fff;text-decoration:none;border-bottom:1px solid rgba(34,211,238,.5);transition:border-color .2s ease,text-shadow .2s ease}
+.brief .card a:hover,.brief .card a:focus-visible{border-color:var(--cyan);text-shadow:0 0 12px rgba(34,211,238,.8)}
+.menu{margin:clamp(18px,3vh,28px) 0 0;padding:0;list-style:none;border-top:1px solid rgba(165,150,207,.18)}
+.menu li{padding:14px 0;border-bottom:1px solid rgba(165,150,207,.18)}
+.menu .row{display:flex;justify-content:space-between;gap:16px;align-items:baseline}
+.menu .row b{font-family:'Orbitron',sans-serif;font-weight:700;font-size:.92rem;color:#fff;letter-spacing:.03em}
+.menu .row s{
+  font-family:'Share Tech Mono',monospace;text-decoration:none;white-space:nowrap;
+  color:var(--amber);text-shadow:0 0 10px rgba(255,176,32,.55);letter-spacing:.08em;
+}
+.menu .tag{
+  display:inline-block;margin-bottom:.45em;
+  font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--green);text-shadow:0 0 10px rgba(74,222,128,.6);
+}
+.menu p{margin:.35em 0 0;font-size:.9rem;color:var(--dim);line-height:1.6}
+.menu .sides{display:flex;flex-wrap:wrap;gap:8px 22px}
+.menu .sides span{font-family:'Share Tech Mono',monospace;font-size:.86rem;color:#d8d0f2;letter-spacing:.04em}
+.menu .sides span s{text-decoration:none;color:var(--amber);text-shadow:0 0 10px rgba(255,176,32,.55)}
+
+/* ============================================================
    Footer
    ============================================================ */
 footer{
@@ -974,6 +1007,70 @@ footer span{color:var(--magenta)}
           Fixing the space-time continuum turns out to have a budget.
           MobilePay Juho at <span id="paynum">044&nbsp;328&nbsp;4647</span>, message: Vortex 84.
         </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BRIEFING ============ -->
+  <section id="briefing">
+    <div class="wrap center">
+      <hr class="rule">
+      <p class="eyebrow" data-reveal style="justify-content:center">09 / Briefing</p>
+      <h2 data-reveal data-delay="1"><span class="chrome skew">FIELD NOTES</span></h2>
+      <p class="lead dim" data-reveal data-delay="2" style="margin-top:.8em">Extra intel for Saturday 26 September.</p>
+
+      <div class="brief">
+        <article class="card" data-reveal style="--cc:var(--cyan)">
+          <span class="yr">Schedule</span>
+          <h3>Timeline</h3>
+          <p>Doors open at 5 pm. Welcome speech at 6 pm, so please be there by then at the latest.</p>
+          <p>The first DJ starts at 9 pm and the party goes on as long as there are people on the floor. Lights come on at 4 am at the latest.</p>
+        </article>
+
+        <article class="card" data-reveal data-delay="1" style="--cc:var(--magenta)">
+          <span class="yr">Drinks &amp; snacks</span>
+          <h3>Fuel supply</h3>
+          <p>There will be plenty to drink, both alcoholic and non-alcoholic, plus small savoury and sweet snacks throughout the evening.</p>
+          <p>No need to bring your own drinks.</p>
+        </article>
+
+        <article class="card span2" data-reveal data-delay="2" style="--cc:var(--amber)">
+          <span class="yr">Food</span>
+          <h3>Mr Delicious Food Truck</h3>
+          <p>From 7 pm, the Mr Delicious Food Truck will be on site, where you can buy hot food at your own expense. Menu below, with options for special diets too.</p>
+          <p>So have something to eat in the afternoon and let the truck take care of your evening hunger.</p>
+          <ul class="menu">
+            <li>
+              <div class="row"><b>Philly Cheesesteak</b><s>14.50&nbsp;&euro;</s></div>
+              <p>Served in a baguette: beef tenderloin, Swiss cheese, cheddar cheese, caramelised onion, bell pepper, button mushrooms and house sauce.</p>
+            </li>
+            <li>
+              <span class="tag">Gluten-free option</span>
+              <div class="row"><b>Philly Cheesesteak Bowl</b><s>16.50&nbsp;&euro;</s></div>
+              <p>The same ingredients as the Philly Cheesesteak: beef tenderloin, Swiss cheese, cheddar cheese, caramelised onion, bell pepper, button mushrooms and house sauce. Instead of a baguette, it is served in a bowl on a bed of rice. This option is gluten-free.</p>
+            </li>
+            <li>
+              <span class="tag">Lactose-free option</span>
+              <div class="row"><b>Philly Bowl, no dairy</b></div>
+              <p>The regular Philly Cheesesteak contains dairy, so it is not lactose-free. However, the truck can prepare the bowl version without cheese and house sauce and serve it with rice, which makes the dish lactose-free. Fries are also available as a side.</p>
+            </li>
+            <li>
+              <span class="tag">Vegetarian / vegan option</span>
+              <div class="row"><b>Falafel Bowl</b></div>
+              <p>Falafel, salad, fries and sauces.</p>
+            </li>
+            <li>
+              <div class="row"><b>Sides</b></div>
+              <div class="sides" style="margin-top:.6em"><span>Fries <s>6&nbsp;&euro;</s></span><span>Dips <s>1.50&nbsp;&euro;</s></span></div>
+            </li>
+          </ul>
+        </article>
+
+        <article class="card span2" data-reveal style="--cc:var(--green)">
+          <span class="yr">Music</span>
+          <h3>Shared playlist</h3>
+          <p>Here's a shared Spotify playlist where you can add your own favourites: <a href="https://open.spotify.com/playlist/6it0ZUWELc1j6UZmpTMXSo?si=fc0044d281694345&amp;pt=2026c28b3f6ce13ccf5acd815b89616b" target="_blank" rel="noopener noreferrer">Vortex 84 on Spotify&nbsp;<i aria-hidden="true" style="font-style:normal">&#8599;</i></a></p>
+        </article>
       </div>
     </div>
   </section>
