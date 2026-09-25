@@ -8,7 +8,7 @@
 <style>
 /* ============================================================
    VORTEX 84 screen loop: plays the screens in order with crossfades,
-   forever, about 13-14 minutes per round. Tetris runs two games (the second
+   forever, about 16-17 minutes per round. Tetris runs two games (the second
    ends with the T-800) and hands over when its finale is done. Click to go fullscreen.
    ============================================================ */
 *,*::before,*::after{box-sizing:border-box}
@@ -38,6 +38,7 @@ body.fs #hint,body.idle #hint{opacity:0}
 const SEQUENCE = [
   { src:'sunset-car.html',  ms:5*60e3 },                 // five 60 s drives into the sun
   { src:'tetris.html',      until:'vortex84:done', max:10*60e3 },   // ~4 min: two games, T-800 finale
+  { src:'dance.html',       ms:3*60e3 },                 // silent here: the dancers keep time on their own clock
   { src:'vortex-dark.html', ms:4.5*60e3 },
 ];
 const FADE = 2000;
