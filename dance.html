@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>VORTEX 84 · Dance Floor</title>
+<meta name="description" content="The dance floor is ready. Saturday 26.9.2026. Sound on.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://juho-vehvilainen.github.io/vortex-84/dance.html">
+<meta property="og:site_name" content="VORTEX 84">
+<meta property="og:title" content="VORTEX 84 · The dance floor is ready">
+<meta property="og:description" content="Saturday 26.9.2026. Sound on.">
+<meta property="og:image" content="https://juho-vehvilainen.github.io/vortex-84/assets/img/og-dance.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Two synthwave guys and a Terminator skeleton dancing on a neon grid under a striped sunset.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    VORTEX 84 dance floor: two synthwave guys and a T-800 dancing on the
@@ -50,7 +64,42 @@ body.idle{cursor:none}
   color:#a596cf;background:rgba(5,2,12,.7);padding:8px 14px;border-radius:3px;
   transition:opacity .6s ease;
 }
-body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
+body.fs #hint,body.idle #hint,body.embed #hint,body.gated #hint{opacity:0}
+
+.chrome{
+  background:linear-gradient(178deg,#f4fbff 0%,#a8e2ff 22%,#3f86ff 44%,#12224d 51%,#ff2d95 70%,#ffc4e9 92%,#fff 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 10px rgba(255,45,149,.65)) drop-shadow(0 0 40px rgba(43,108,255,.42));
+}
+/* entry gate: browsers only start sound after a tap */
+#gate{
+  position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3vh;
+  background:radial-gradient(90% 70% at 50% 50%,rgba(13,6,32,.72) 0%,rgba(5,2,12,.9) 75%);
+  transition:opacity .8s ease;
+}
+body:not(.gated) #gate{opacity:0;pointer-events:none}
+#gate h1{margin:0;font:900 clamp(40px,9vw,140px)/1 'Orbitron',sans-serif;letter-spacing:.02em;text-align:center}
+#gate p{margin:0;font:clamp(13px,1.6vw,22px)/1.4 'Share Tech Mono',ui-monospace,monospace;letter-spacing:.3em;color:#a596cf;text-transform:uppercase;text-align:center;padding:0 16px}
+#enter{
+  margin-top:2vh;padding:.9em 1.6em;border:2px solid #ff2d95;border-radius:3px;cursor:pointer;
+  background:rgba(255,45,149,.12);color:#fff;font:700 clamp(15px,1.8vw,26px)/1 'Orbitron',sans-serif;letter-spacing:.12em;
+  box-shadow:0 0 24px rgba(255,45,149,.45),inset 0 0 18px rgba(255,45,149,.25);
+  animation:throb 1.8s ease-in-out infinite;
+}
+@keyframes throb{50%{box-shadow:0 0 44px rgba(255,45,149,.8),inset 0 0 24px rgba(255,45,149,.4)}}
+/* title over the scene */
+#title{
+  position:fixed;left:0;right:0;top:5vh;z-index:4;margin:0;text-align:center;pointer-events:none;
+  opacity:0;transition:opacity 1.2s ease .4s;
+}
+body.live #title{opacity:1}
+#title .t{display:inline-block;font:900 clamp(34px,6vw,96px)/1 'Orbitron',sans-serif;transform:skewX(-8deg)}
+#title .s{display:block;margin-top:1.2vh;font:clamp(12px,1.5vw,22px)/1.3 'Share Tech Mono',ui-monospace,monospace;letter-spacing:.32em;color:#efe9ff;text-shadow:0 0 12px rgba(255,45,149,.8)}
+#mute{
+  position:fixed;right:16px;bottom:16px;z-index:6;width:48px;height:48px;border-radius:50%;cursor:pointer;
+  border:1px solid rgba(165,150,207,.45);background:rgba(5,2,12,.6);color:#efe9ff;font-size:20px;line-height:1;
+}
+body.gated #mute,body.embed #mute{display:none}
 </style>
 </head>
 <body>
@@ -60,6 +109,14 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
 <div class="layer grain"></div>
 <div class="layer vig"></div>
 <p id="hint">Click for fullscreen</p>
+<h1 id="title" aria-label="Vortex 84, Saturday 26.9."><span class="t chrome">VORTEX 84</span><span class="s">The dance floor is ready · Sat 26.9.</span></h1>
+<div id="gate">
+  <h1 class="chrome">VORTEX 84</h1>
+  <p>Incoming transmission · sound on</p>
+  <button id="enter" type="button">&#9654;&nbsp; Enter the dance floor</button>
+</div>
+<button id="mute" type="button" aria-label="Mute">&#128266;</button>
+<audio id="track" loop preload="auto"></audio>
 
 <script>
 /* ============================================================
@@ -69,7 +126,9 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
 (function dance(){
   const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
   const dc = document.createElement('canvas'), d = dc.getContext('2d');   // dancers, drawn once and reflected
-  const BPM = 118, BEATS_PER_MOVE = 16;
+  /* measured from the site track: 111 BPM, first beat 0.501 s in */
+  const BPM = 111, BEAT_OFFSET = 0.501, BEATS_PER_MOVE = 16;
+  const audio = document.getElementById('track');
   const MOVES = ['pump','travolta','runningman','clap'];
   const TAU = Math.PI*2;
   const params = new URLSearchParams(location.search);
@@ -334,7 +393,10 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
   function frame(t){
     const dt = Math.min(0.05,(t-last)/1000)||0.016; last = t;
     clock += dt;
-    const b = clock * BPM/60, beat = Math.floor(b), ph = b % 1;
+    /* while the track plays, its own clock drives the beat so the moves stay on it */
+    const playing = !audio.paused && audio.currentTime > 0;
+    const b = playing ? (audio.currentTime - BEAT_OFFSET)*BPM/60 + 1000 : clock*BPM/60;
+    const beat = Math.floor(b), ph = ((b % 1) + 1) % 1;
     const pulse = Math.pow(1-ph, 3);                        // flash right on the beat
 
     DPR = Math.min(devicePixelRatio||1, 2);
@@ -344,7 +406,8 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
     if(W !== lastW || H !== lastH){ lastW = W; lastH = H; makeStars(); makeRidge(); }
     ctx.setTransform(DPR,0,0,DPR,0,0);
 
-    const hy = H*0.62, cx = W*0.5, e = 0.3 + 0.35*pulse;   // horizon raised so the floor has room
+    const tall = H > W*1.1;                                // phones in portrait
+    const hy = H*(tall ? 0.58 : 0.62), cx = W*0.5, e = 0.3 + 0.35*pulse;   // horizon raised so the floor has room
 
     /* sky, stars */
     let sky = ctx.createLinearGradient(0,0,0,hy);
@@ -435,19 +498,21 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
     ctx.globalCompositeOperation = 'source-over';
 
     /* dancers: rim pass then body pass into their own layer */
-    const ground = H*0.93, h = Math.min(H*0.56, W*0.30);
+    const ground = H*(tall ? 0.88 : 0.93), h = tall ? Math.min(H*0.36, W*0.50) : Math.min(H*0.56, W*0.30);
+    const XS = tall ? [0.18, 0.5, 0.82] : [0.27, 0.5, 0.73];
     d.setTransform(1,0,0,1,0,0); d.clearRect(0,0,dc.width,dc.height); d.setTransform(DPR,0,0,DPR,0,0);
     for(const c of CAST){
       d.save(); d.shadowColor = c.rim; d.shadowBlur = h*0.05;
-      drawDancer(d, c, W*c.x, ground, h, b, 'rim');
+      drawDancer(d, c, W*XS[CAST.indexOf(c)], ground, h, b, 'rim');
       d.restore();
-      drawDancer(d, c, W*c.x, ground, h, b, 'fill');
+      drawDancer(d, c, W*XS[CAST.indexOf(c)], ground, h, b, 'fill');
     }
     /* shadows under the feet */
     for(const c of CAST){
-      const sg = ctx.createRadialGradient(W*c.x, ground, 0, W*c.x, ground, h*0.2);
+      const sx = W*XS[CAST.indexOf(c)];
+      const sg = ctx.createRadialGradient(sx, ground, 0, sx, ground, h*0.2);
       sg.addColorStop(0,'rgba(0,0,0,.6)'); sg.addColorStop(1,'rgba(0,0,0,0)');
-      ctx.fillStyle = sg; ctx.beginPath(); ctx.ellipse(W*c.x, ground, h*0.2, h*0.035, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.ellipse(sx, ground, h*0.2, h*0.035, 0, 0, TAU); ctx.fill();
     }
     /* reflection in the glossy floor, then the dancers themselves */
     ctx.save(); ctx.setTransform(1,0,0,1,0,0);
@@ -462,6 +527,34 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
   requestAnimationFrame(frame);
 })();
 
+
+/* ============================================================
+   Sound: tap to enter starts the track (plain <audio>, so iPhones
+   play it even with the ringer switch off). No sound inside loop.html.
+   ============================================================ */
+(function sound(){
+  const body = document.body, audio = document.getElementById('track');
+  const embed = new URLSearchParams(location.search).has('embed');
+  if(embed) return;
+  const m4a = 'assets/audio/turtlebeats-dark-synthwave-spectral-251688.m4a';
+  const mp3 = 'assets/audio/turtlebeats-dark-synthwave-spectral-251688.mp3';
+  audio.src = audio.canPlayType('audio/mp4; codecs="mp4a.40.2"') ? m4a : mp3;
+  audio.volume = 0.8;
+  body.classList.add('gated');
+  const mute = document.getElementById('mute');
+  document.getElementById('enter').addEventListener('click', e=>{
+    e.stopPropagation();
+    audio.play().catch(()=>{});
+    body.classList.remove('gated'); body.classList.add('live');
+  });
+  document.getElementById('gate').addEventListener('click', e=> e.stopPropagation());
+  mute.addEventListener('click', e=>{
+    e.stopPropagation();
+    audio.muted = !audio.muted;
+    mute.innerHTML = audio.muted ? '&#128263;' : '&#128266;';
+    mute.setAttribute('aria-label', audio.muted ? 'Unmute' : 'Mute');
+  });
+})();
 
 /* ============================================================
    Fullscreen on click, hide the cursor when idle, keep the screen awake.
