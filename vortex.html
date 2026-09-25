@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VORTEX 84 · Screen</title>
+<style>
+/* ============================================================
+   VORTEX 84 screen loop: the vortex from index.html, full screen,
+   for a TV or projector running all night. Click to go fullscreen.
+   ============================================================ */
+:root{
+  --magenta:#ff2d95;
+  --cyan:#22d3ee;
+  --violet:#7c3aed;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#05020c}
+body{cursor:pointer}
+body.idle{cursor:none}
+
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+
+.stage{position:fixed;inset:0;display:grid;place-items:center;z-index:2}
+.spinner{position:relative;display:grid;place-items:center;width:min(72vmin,900px);aspect-ratio:1;transform:translateY(-6vh)}
+.spinner::before{
+  content:"";position:absolute;inset:-34%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(5,2,12,.7),rgba(5,2,12,.4) 62%,rgba(5,2,12,0) 100%);
+}
+.ring{
+  position:absolute;border-radius:50%;aspect-ratio:1;
+  background:conic-gradient(from 0deg,
+    rgba(255,45,149,0) 0deg, var(--magenta) 40deg, rgba(255,45,149,0) 110deg,
+    rgba(34,211,238,0) 190deg, var(--cyan) 240deg, rgba(34,211,238,0) 320deg);
+  mask:radial-gradient(closest-side,transparent 74%,#000 82%,#000 98%,transparent 100%);
+  -webkit-mask:radial-gradient(closest-side,transparent 74%,#000 82%,#000 98%,transparent 100%);
+  will-change:transform;
+}
+.ring.r1{width:100%;animation:spin 9s linear infinite}
+.ring.r2{width:70%;animation:spin 6s linear infinite reverse;opacity:.9}
+.ring.r3{width:44%;animation:spin 3.6s linear infinite;opacity:.8}
+@keyframes spin{to{transform:rotate(360deg)}}
+.core{
+  width:26%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,var(--cyan) 30%,var(--violet) 62%,rgba(5,2,12,0) 78%);
+  animation:pulse 2.6s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(.85);opacity:.8}50%{transform:scale(1.1);opacity:1}}
+
+/* CRT overlays, same as the site */
+.layer{position:fixed;inset:0;pointer-events:none;z-index:3}
+.scan{
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.30) 2px 3px);
+  opacity:.55;mix-blend-mode:multiply;
+}
+.sweep{
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(180,220,255,.055) 46%,rgba(255,255,255,0) 100%);
+  height:34vh;top:-34vh;bottom:auto;
+  animation:sweep 9s linear infinite;
+}
+@keyframes sweep{to{transform:translateY(140vh)}}
+.grain{
+  opacity:.10;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  animation:grain 620ms steps(4) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}
+  50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(0,0)}
+}
+.vig{
+  background:
+    radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 42%,rgba(0,0,0,.55) 82%,rgba(0,0,0,.9) 100%),
+    radial-gradient(60% 40% at 50% 100%,rgba(124,58,237,.16),rgba(0,0,0,0) 70%);
+}
+
+#hint{
+  position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);z-index:4;
+  font:14px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:#a596cf;background:rgba(5,2,12,.7);padding:8px 14px;border-radius:3px;
+  transition:opacity .6s ease;
+}
+body.fs #hint,body.idle #hint{opacity:0}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="stage" aria-hidden="true">
+  <span class="spinner">
+    <span class="ring r1"></span>
+    <span class="ring r2"></span>
+    <span class="ring r3"></span>
+    <span class="core"></span>
+  </span>
+</div>
+<div class="layer scan"></div>
+<div class="layer sweep"></div>
+<div class="layer grain"></div>
+<div class="layer vig"></div>
+<p id="hint">Click for fullscreen</p>
+
+<script>
+/* ============================================================
+   Background canvas: sunset, grid horizon, starfield, ridge.
+   Copied from index.html; no audio here, so energy is a slow synthetic pulse.
+   ============================================================ */
+(function background(){
+  const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+  let stars=[],ridge=[],phase=0,last=0,lastW=0,lastH=0,synth=0,energy=0.25;
+
+  function makeStars(W,H){
+    const n = Math.min(260, Math.round(W*H/9000));
+    stars = Array.from({length:n},()=>({
+      x:Math.random()*W, y:Math.random()*H*0.72,
+      r:Math.random()*1.25+.25, tw:Math.random()*Math.PI*2,
+      sp:Math.random()*1.8+.4
+    }));
+  }
+  function makeRidge(W){
+    ridge = [];
+    let x = -40, seed = 1337;
+    const rnd = ()=> (seed = (seed*16807)%2147483647)/2147483647;
+    while(x < W+120){
+      const w = 60 + rnd()*140;
+      ridge.push({x, w, h: 26 + rnd()*88});
+      x += w*0.62;
+    }
+  }
+
+  function frame(t){
+    const dt = Math.min(0.05,(t-last)/1000)||0.016; last = t;
+
+    synth += dt;
+    const level = 0.30 + 0.14*Math.sin(synth*1.7) + 0.07*Math.sin(synth*3.9);
+    energy += (level - energy) * 0.06;
+
+    const DPR = Math.min(devicePixelRatio||1, 2);
+    const W = cv.clientWidth || innerWidth;
+    const H = cv.clientHeight || innerHeight;
+    const bw = Math.round(W*DPR), bh = Math.round(H*DPR);
+    if(cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; }
+    if(W !== lastW || H !== lastH){ lastW = W; lastH = H; makeStars(W,H); makeRidge(W); }
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    phase = (phase + dt*(0.12 + energy*0.30)) % 1;
+
+    const hy = H*0.76, cx = W*0.5, e = energy;
+
+    ctx.clearRect(0,0,W,H);
+
+    let sky = ctx.createLinearGradient(0,0,0,hy);
+    sky.addColorStop(0,'#05020c'); sky.addColorStop(.55,'#170a2e'); sky.addColorStop(1,'#4a1152');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,hy);
+
+    for(const s of stars){
+      s.tw += dt*s.sp;
+      const a = (0.35 + 0.45*Math.sin(s.tw)) * (0.6 + e*0.7);
+      ctx.globalAlpha = Math.max(0,Math.min(1,a));
+      ctx.fillStyle = '#dbe7ff';
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    const R = Math.min(W,H)*0.26;
+    const g = ctx.createLinearGradient(0,hy-R,0,hy+R*0.25);
+    g.addColorStop(0,'#ffe36a'); g.addColorStop(.45,'#ff6a1f'); g.addColorStop(1,'#ff2d95');
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,hy,R,Math.PI,0); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = g; ctx.fillRect(cx-R,hy-R,R*2,R*1.2);
+    ctx.fillStyle = 'rgba(10,3,20,.92)';
+    for(let i=0;i<10;i++){
+      const p = i/10;
+      const y = hy - R + R*Math.pow(p,0.6)*1.02;
+      ctx.fillRect(cx-R, y, R*2, 2 + p*9);
+    }
+    ctx.restore();
+    ctx.globalAlpha = .18 + e*.22;
+    const bl = ctx.createRadialGradient(cx,hy,R*.3,cx,hy,R*2.6);
+    bl.addColorStop(0,'#ff6a1f'); bl.addColorStop(1,'rgba(255,106,31,0)');
+    ctx.fillStyle = bl; ctx.fillRect(0,0,W,hy+R);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#180a2b';
+    ctx.beginPath(); ctx.moveTo(-40,hy);
+    for(const m of ridge){ ctx.lineTo(m.x+m.w*0.5, hy-m.h); ctx.lineTo(m.x+m.w, hy); }
+    ctx.lineTo(W+80,hy); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,45,149,'+(0.30+e*0.35)+')';
+    ctx.lineWidth = 1.2; ctx.stroke();
+
+    let gr = ctx.createLinearGradient(0,hy,0,H);
+    gr.addColorStop(0,'#12061f'); gr.addColorStop(1,'#05020c');
+    ctx.fillStyle = gr; ctx.fillRect(0,hy,W,H-hy);
+
+    const ROWS = 18, depth = H-hy;
+    ctx.lineWidth = 1;
+    for(let i=0;i<ROWS;i++){
+      const p = (i+phase)/ROWS;
+      const y = hy + depth*Math.pow(p,2.7);
+      const a = (0.10 + 0.55*p) * (0.55 + e*0.7);
+      ctx.strokeStyle = 'rgba(34,211,238,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+    const SP = Math.max(60, W/9);
+    for(let k=-14;k<=14;k++){
+      const a = (0.30 - Math.abs(k)*0.016) * (0.55 + e*0.7);
+      if(a<=0) continue;
+      ctx.strokeStyle = 'rgba(255,45,149,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(cx,hy); ctx.lineTo(cx + k*SP, H); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,'+(0.30+e*0.45)+')';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(0,hy); ctx.lineTo(W,hy); ctx.stroke();
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ============================================================
+   Fullscreen on click, hide the cursor when idle, keep the screen awake.
+   ============================================================ */
+(function screen(){
+  const body = document.body;
+
+  body.addEventListener('click', ()=>{
+    const d = document, el = d.documentElement;
+    if(d.fullscreenElement || d.webkitFullscreenElement){
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    }else{
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(req) req.call(el);
+    }
+  });
+  const onFs = ()=> body.classList.toggle('fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
+  document.addEventListener('fullscreenchange', onFs);
+  document.addEventListener('webkitfullscreenchange', onFs);
+
+  let idle;
+  const wake = ()=>{ body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(()=>body.classList.add('idle'), 2500); };
+  addEventListener('mousemove', wake); wake();
+
+  /* Screen Wake Lock is released when the tab is hidden, so re-request on return.
+     Browsers without it fall back to `caffeinate -d` on the Mac. */
+  let lock = null;
+  async function keepAwake(){
+    try{ if('wakeLock' in navigator && !lock){ lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', ()=>{ lock = null; }); } }catch(e){}
+  }
+  keepAwake();
+  body.addEventListener('click', keepAwake);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') keepAwake(); });
+})();
+</script>
+</body>
+</html>
