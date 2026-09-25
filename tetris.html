@@ -281,7 +281,7 @@ let energy = 0.25;
    ============================================================ */
 (function tetris(){
   const COLS = 10, ROWS = 20;
-  const NOISE_PER_LEVEL = 0.3;
+  const NOISE_PER_LEVEL = 0.8;
   const PIECES = {
     I:{c:'#22d3ee', cells:[[0,1],[1,1],[2,1],[3,1]], rots:2},
     O:{c:'#ffb020', cells:[[0,0],[1,0],[0,1],[1,1]], rots:1},
@@ -437,8 +437,8 @@ let energy = 0.25;
   }
   function stepMs(){
     const aligned = cur && cur.r===target.r && cur.x===target.x;
-    if(!aligned) return 95;                              // deliberate, readable moves
-    return Math.max(22, 70 - (level-1)*4);               // soft drop quickens with level
+    if(!aligned) return 60;                              // quick but still readable moves
+    return Math.max(14, 42 - (level-1)*3);               // soft drop quickens with level
   }
 
   /* ---- rendering ---- */
