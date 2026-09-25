@@ -112,7 +112,7 @@ body.idle{cursor:none}
   color:#a596cf;background:rgba(0,0,0,.7);padding:8px 14px;border-radius:3px;
   transition:opacity .6s ease;
 }
-body.fs #hint,body.idle #hint{opacity:0}
+body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
 </style>
 </head>
 <body>
@@ -143,6 +143,7 @@ body.fs #hint,body.idle #hint{opacity:0}
    ============================================================ */
 (function screen(){
   const body = document.body;
+  if(new URLSearchParams(location.search).has('embed')) body.classList.add('embed');
 
   body.addEventListener('click', ()=>{
     const d = document, el = d.documentElement;

@@ -85,6 +85,34 @@ body.idle{cursor:none}
 }
 #banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
+/* ============================================================
+   Terminator finale (every second game)
+   ============================================================ */
+#fx{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:2;pointer-events:none}
+.stage,.side,#board{transition:opacity .6s ease}
+body.t800 .side{opacity:0}
+body.t800.boom #board{opacity:0}
+/* red machine vision: everything goes red, luminance kept */
+#red{
+  position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;
+  background:#ff1a1a;mix-blend-mode:color;transition:opacity .7s ease;
+}
+body.t800 #red{opacity:.85}
+#hud{
+  position:fixed;left:4vw;top:6vh;z-index:4;margin:0;pointer-events:none;
+  font:clamp(12px,1.35vw,26px)/1.55 'Share Tech Mono',ui-monospace,Menlo,monospace;
+  letter-spacing:.12em;color:#ffd9d9;text-shadow:0 0 8px #ff2020,0 0 22px rgba(255,0,0,.6);
+  white-space:pre;opacity:0;transition:opacity .5s ease;
+}
+body.t800 #hud{opacity:1}
+#quote{
+  position:fixed;left:0;right:34vw;bottom:12vh;z-index:4;margin:0;text-align:center;pointer-events:none;
+  font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(24px,4.4vw,96px);letter-spacing:.06em;
+  color:#fff;text-shadow:0 0 10px #ff2020,0 0 40px #ff0000,0 0 90px rgba(255,0,0,.7);
+  opacity:0;transition:opacity .6s ease;
+}
+#quote.show{opacity:1}
+
 /* CRT overlays, same as the site */
 .layer{position:fixed;inset:0;pointer-events:none;z-index:3}
 .scan{
@@ -118,7 +146,7 @@ body.idle{cursor:none}
   color:#a596cf;background:rgba(5,2,12,.7);padding:8px 14px;border-radius:3px;
   transition:opacity .6s ease;
 }
-body.fs #hint,body.idle #hint{opacity:0}
+body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
 
 /* narrow screens: stack the side panels above the well */
 @media (max-aspect-ratio:1/1){
@@ -147,6 +175,10 @@ body.fs #hint,body.idle #hint{opacity:0}
     <div class="panel"><div class="k">Level</div><div class="v" id="level">1</div></div>
   </div>
 </div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="red" aria-hidden="true"></div>
+<pre id="hud" aria-hidden="true"></pre>
+<p id="quote" aria-hidden="true"></p>
 <div class="layer scan"></div>
 <div class="layer sweep"></div>
 <div class="layer grain"></div>
@@ -310,7 +342,11 @@ let energy = 0.25;
   const $lines = document.getElementById('lines'), $level = document.getElementById('level');
 
   let grid, bag = [], cur, nextKey, target, score, lines, level, hi = 0;
-  let clearing = null, over = null, acc = 0, last = 0, CELL = 32;
+  let clearing = null, over = null, acc = 0, last = 0, CELL = 32, gameNo = 0;
+  const params = new URLSearchParams(location.search);
+  const EMBED = params.has('embed');
+  /* ?demo=<ms> fills the board, runs the finale and freezes it at that moment (for screenshots) */
+  const DEMO = params.has('demo') ? +params.get('demo') : null;
 
   function emptyGrid(){ return Array.from({length:ROWS},()=>Array(COLS).fill(null)); }
   function draw7(){
@@ -363,6 +399,7 @@ let energy = 0.25;
 
   /* ---- game flow ---- */
   function reset(){
+    gameNo++;
     grid = emptyGrid(); score = 0; lines = 0; level = 1; bag = [];
     nextKey = draw7(); spawn(); hud();
   }
@@ -400,8 +437,10 @@ let energy = 0.25;
     hud(); spawn();
   }
   function gameOver(){
-    cur = null; over = {t:0};
+    cur = null;
     hi = Math.max(hi, score); hud();
+    if(gameNo % 2 === 0 || DEMO !== null){ T800.start(); return; }
+    over = {t:0};
     flash('GAME OVER', 2600);
   }
   function flash(text, ms=1300){
@@ -524,6 +563,7 @@ let energy = 0.25;
     const dt = Math.min(100, t-last || 16); last = t;
     if(clearing){ clearing.t += dt; if(clearing.t>=380) finishClear(); }
     else if(over){ over.t += dt; if(over.t>=2900){ over = null; reset(); } }
+    else if(T800.active){ T800.tick(DEMO !== null ? 0 : dt); }
     else if(cur){
       acc += dt;
       let guard = 0;
@@ -534,8 +574,269 @@ let energy = 0.25;
     requestAnimationFrame(frame);
   }
 
+  /* ============================================================
+     Terminator finale. The skull from the poster rises, locks on,
+     shoots the well three times and the stack explodes.
+     Timeline in ms from start.
+     ============================================================ */
+  const T800 = (function(){
+    const fx = document.getElementById('fx'), f = fx.getContext('2d');
+    const hudEl = document.getElementById('hud'), quote = document.getElementById('quote');
+    const stage = document.querySelector('.stage');
+    const img = new Image(); img.src = 'assets/img/t800.png';
+    const EYES = [[0.149,0.365],[0.451,0.349]];          // eye centres as fractions of the image
+    const SHOTS = [3400, 3850, 4300], BOOM = 4900, END = 12500;
+    const HUD = [
+      [0,    'MODEL T-800 // VISUAL ANALYSIS'],
+      [350,  'SCANNING...'],
+      [900,  'TARGET ACQUIRED: TETRIS'],
+      [1400, 'MATCH ......... 99.7%'],
+      [1900, 'THREAT LEVEL .. CRITICAL'],
+      [2600, 'ACTION: TERMINATE'],
+    ];
+    let T = 0, active = false, parts = [], sparks = [], cracks = [], shotsDone = 0, boomed = false;
+    let W = 0, H = 0, DPR = 1;
+
+    function fit(){
+      DPR = Math.min(devicePixelRatio||1, 2);
+      W = innerWidth; H = innerHeight;
+      fx.width = Math.round(W*DPR); fx.height = Math.round(H*DPR);
+      f.setTransform(DPR,0,0,DPR,0,0);
+    }
+    const ease = x => 1 - Math.pow(1 - Math.max(0,Math.min(1,x)), 3);
+    const wellRect = () => board.getBoundingClientRect();
+
+    /* where the skull is and how big, at time T */
+    function skull(){
+      const h = H*0.78, w = h*img.width/(img.height||1);
+      const x = W*0.80 - w/2;
+      const rise = ease((T-700)/2000), sink = ease((T-10600)/1500);
+      const y = H - (H*0.02 + h*0.92)*rise + (h*1.05)*sink;
+      return {x, y, w, h};
+    }
+    function eyes(sk){ return EYES.map(([ex,ey]) => [sk.x + ex*sk.w, sk.y + ey*sk.h]); }
+
+    function start(){
+      fit(); active = true; T = 0; shotsDone = 0; boomed = false;
+      parts = []; sparks = []; cracks = [];
+      document.body.classList.add('t800');
+      hudEl.textContent = ''; quote.textContent = '';
+    }
+    function finish(){
+      active = false;
+      document.body.classList.remove('t800','boom');
+      quote.classList.remove('show');
+      hudEl.textContent = '';
+      f.clearRect(0,0,W,H);
+      stage.style.transform = '';
+      /* inside loop.html: hand over and stay empty while the next screen fades in */
+      if(EMBED){ document.getElementById('board').style.opacity = '0'; parent.postMessage('vortex84:done', '*'); return; }
+      reset();
+    }
+
+    function shoot(i){
+      const r = wellRect();
+      const tx = r.left + r.width*(0.3 + 0.4*Math.random());
+      const ty = r.top + r.height*(0.35 + 0.45*Math.random());
+      cracks.push(makeCrack(tx, ty));
+      for(let k=0;k<26;k++) sparks.push(spark(tx, ty, 900));
+      shake = Math.max(shake, 10);
+      energy = Math.min(1.6, energy + 0.3);
+      shots.push({i, tx, ty, t:0});
+    }
+    function makeCrack(x, y){
+      const lines = [];
+      const n = 6 + (Math.random()*4|0);
+      for(let k=0;k<n;k++){
+        let a = Math.random()*Math.PI*2, px = x, py = y; const pts = [[px,py]];
+        const len = CELL*(1.5 + Math.random()*3);
+        for(let s=0;s<5;s++){ a += (Math.random()-.5)*0.9; px += Math.cos(a)*len/5; py += Math.sin(a)*len/5; pts.push([px,py]); }
+        lines.push(pts);
+      }
+      return lines;
+    }
+    function spark(x, y, sp){
+      const a = Math.random()*Math.PI*2, v = sp*(0.3 + Math.random()*0.7);
+      return {x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - sp*0.2, life:0.5 + Math.random()*0.7, t:0,
+              c: Math.random()<.5 ? '#ffe36a' : (Math.random()<.5 ? '#ff6a1f' : '#ffffff')};
+    }
+    function explode(){
+      boomed = true;
+      const r = wellRect(), cs = r.width/COLS;
+      const cx = r.left + r.width/2, cy = r.top + r.height*0.6;
+      for(let row=0; row<ROWS; row++) for(let c=0; c<COLS; c++){
+        const col = grid[row][c]; if(!col) continue;
+        const x = r.left + c*cs + cs/2, y = r.top + row*cs + cs/2;
+        const dx = x-cx, dy = y-cy, d = Math.hypot(dx,dy) || 1;
+        const v = 900 + Math.random()*1400;
+        parts.push({x, y, vx:dx/d*v*(0.6+Math.random()*0.6) + (Math.random()-.5)*500,
+                    vy:dy/d*v*0.7 - 700 - Math.random()*900,
+                    rot:0, vr:(Math.random()-.5)*14, s:cs, c:col});
+      }
+      for(let k=0;k<220;k++) sparks.push(spark(cx, cy, 1700));
+      grid = emptyGrid();
+      document.body.classList.add('boom');
+      shake = 34; flashA = 1;
+      energy = 1.6;
+    }
+
+    let shots = [], shake = 0, flashA = 0;
+
+    function tick(dt){
+      T += dt;
+      const s = dt/1000;
+
+      /* HUD types itself out */
+      let txt = '';
+      for(const [at, line] of HUD){
+        if(T < at) break;
+        const n = Math.min(line.length, Math.floor((T-at)/22));
+        txt += line.slice(0, n) + '\n';
+      }
+      if(hudEl.textContent !== txt) hudEl.textContent = txt;
+
+      while(shotsDone < SHOTS.length && T >= SHOTS[shotsDone]) shoot(shotsDone++);
+      if(!boomed && T >= BOOM) explode();
+      if(T >= 7600 && !quote.textContent){ quote.textContent = "I'LL BE BACK"; quote.classList.add('show'); }
+      if(T >= 10400) quote.classList.remove('show');
+      if(T >= 10900) document.body.classList.remove('t800');
+
+      for(const p of parts){ p.vy += 2200*s; p.x += p.vx*s; p.y += p.vy*s; p.rot += p.vr*s; }
+      parts = parts.filter(p => p.y < H + 200);
+      for(const k of sparks){ k.t += s; k.vy += 900*s; k.vx *= 0.985; k.x += k.vx*s; k.y += k.vy*s; }
+      sparks = sparks.filter(k => k.t < k.life);
+      for(const b of shots) b.t += dt;
+      shots = shots.filter(b => b.t < 260);
+      shake *= Math.pow(0.02, s); flashA *= Math.pow(0.004, s);
+
+      if(shake > 0.5){
+        const sx = (Math.random()-.5)*shake, sy = (Math.random()-.5)*shake;
+        stage.style.transform = `translate(${sx}px,${sy}px)`;
+      }else stage.style.transform = '';
+
+      draw();
+      if(T >= END) finish();
+    }
+
+    function draw(){
+      f.clearRect(0,0,W,H);
+      const r = wellRect();
+
+      /* target lock: brackets closing in on the well */
+      if(!boomed && T > 400){
+        const k = ease((T-400)/1100), pad = CELL*(4*(1-k) + 0.5);
+        const x0 = r.left-pad, y0 = r.top-pad, x1 = r.right+pad, y1 = r.bottom+pad, L = CELL*1.6;
+        f.strokeStyle = 'rgba(255,60,60,.95)'; f.lineWidth = 3;
+        f.shadowColor = '#ff0000'; f.shadowBlur = 14;
+        f.beginPath();
+        f.moveTo(x0,y0+L); f.lineTo(x0,y0); f.lineTo(x0+L,y0);
+        f.moveTo(x1-L,y0); f.lineTo(x1,y0); f.lineTo(x1,y0+L);
+        f.moveTo(x1,y1-L); f.lineTo(x1,y1); f.lineTo(x1-L,y1);
+        f.moveTo(x0+L,y1); f.lineTo(x0,y1); f.lineTo(x0,y1-L);
+        const mx = (x0+x1)/2, my = (y0+y1)/2, c = CELL*0.8;
+        f.moveTo(mx-c,my); f.lineTo(mx+c,my); f.moveTo(mx,my-c); f.lineTo(mx,my+c);
+        f.stroke(); f.shadowBlur = 0;
+        if(T > 1500 && Math.floor(T/250)%2===0){
+          f.font = `${Math.round(CELL*0.5)}px 'Share Tech Mono', monospace`;
+          f.fillStyle = '#ffd9d9'; f.fillText('LOCKED', x0, y0 - CELL*0.35);
+        }
+      }
+
+      /* cracks in the glass */
+      if(!boomed){
+        f.strokeStyle = 'rgba(255,255,255,.75)'; f.lineWidth = 1.4;
+        for(const crack of cracks) for(const pts of crack){
+          f.beginPath(); f.moveTo(pts[0][0],pts[0][1]);
+          for(const [x,y] of pts.slice(1)) f.lineTo(x,y);
+          f.stroke();
+        }
+      }
+
+      /* the skull */
+      const sk = skull();
+      if(img.complete && img.naturalWidth && sk.y < H){
+        f.drawImage(img, sk.x, sk.y, sk.w, sk.h);
+        /* eye glow builds up to the first shot, flares on each shot */
+        const charge = ease((T-2400)/1000);
+        const fire = shots.length ? 1 : 0;
+        const fade = 1 - ease((T-10600)/900);
+        const g = (0.35 + 0.65*charge + 0.8*fire) * fade;
+        if(g > 0.02){
+          f.globalCompositeOperation = 'lighter';
+          for(const [ex,ey] of eyes(sk)){
+            const R = sk.w*(0.09 + 0.05*fire);
+            const rg = f.createRadialGradient(ex,ey,0,ex,ey,R);
+            rg.addColorStop(0,`rgba(255,255,255,${Math.min(1,g)})`);
+            rg.addColorStop(.25,`rgba(255,40,40,${Math.min(1,g)})`);
+            rg.addColorStop(1,'rgba(255,0,0,0)');
+            f.fillStyle = rg; f.beginPath(); f.arc(ex,ey,R,0,6.2832); f.fill();
+          }
+          f.globalCompositeOperation = 'source-over';
+        }
+      }
+
+      /* laser bolts from both eyes to the impact point */
+      if(shots.length){
+        const E = eyes(sk);
+        f.globalCompositeOperation = 'lighter';
+        for(const b of shots){
+          const a = 1 - b.t/260;
+          for(const [ex,ey] of E){
+            for(const [w,col] of [[CELL*0.55,'rgba(255,0,0,'+(0.35*a)+')'],[CELL*0.22,'rgba(255,60,60,'+(0.9*a)+')'],[CELL*0.07,'rgba(255,255,255,'+a+')']]){
+              f.strokeStyle = col; f.lineWidth = w; f.lineCap = 'round';
+              f.beginPath(); f.moveTo(ex,ey); f.lineTo(b.tx,b.ty); f.stroke();
+            }
+          }
+          const R = CELL*2.2*(1-a*0.4);
+          const ig = f.createRadialGradient(b.tx,b.ty,0,b.tx,b.ty,R);
+          ig.addColorStop(0,`rgba(255,255,255,${a})`); ig.addColorStop(.4,`rgba(255,120,40,${a*0.8})`); ig.addColorStop(1,'rgba(255,0,0,0)');
+          f.fillStyle = ig; f.beginPath(); f.arc(b.tx,b.ty,R,0,6.2832); f.fill();
+        }
+        f.globalCompositeOperation = 'source-over';
+      }
+
+      /* flying blocks */
+      for(const p of parts){
+        f.save(); f.translate(p.x,p.y); f.rotate(p.rot);
+        block(f, -p.s/2, -p.s/2, p.s, p.c);
+        f.restore();
+      }
+      /* sparks */
+      f.globalCompositeOperation = 'lighter';
+      for(const k of sparks){
+        const a = 1 - k.t/k.life;
+        f.strokeStyle = k.c; f.globalAlpha = a; f.lineWidth = 2;
+        f.beginPath(); f.moveTo(k.x,k.y); f.lineTo(k.x - k.vx*0.02, k.y - k.vy*0.02); f.stroke();
+      }
+      f.globalAlpha = 1;
+      /* explosion flash */
+      if(flashA > 0.01){
+        const cx = r.left + r.width/2, cy = r.top + r.height*0.6;
+        const fg = f.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*0.8);
+        fg.addColorStop(0,`rgba(255,255,255,${flashA})`);
+        fg.addColorStop(.3,`rgba(255,180,90,${flashA*0.8})`);
+        fg.addColorStop(1,`rgba(255,40,40,${flashA*0.3})`);
+        f.fillStyle = fg; f.fillRect(0,0,W,H);
+      }
+      f.globalCompositeOperation = 'source-over';
+    }
+
+    addEventListener('resize', ()=>{ if(active) fit(); });
+    return { start, tick, get active(){ return active; } };
+  })();
+
+  if(EMBED) document.body.classList.add('embed');
   addEventListener('resize', size);
-  size(); reset();
+  size();
+  if(DEMO === null) reset();
+  else{
+    /* fill the well like a lost game, then replay the finale up to DEMO ms and hold there */
+    const keys = Object.keys(PIECES);
+    grid = emptyGrid(); score = 0; lines = 0; level = 1;
+    for(let r=5;r<ROWS;r++) for(let c=0;c<COLS;c++) if(Math.random() < 0.82) grid[r][c] = PIECES[keys[(Math.random()*7)|0]].c;
+    const probe = new Image(); probe.src = 'assets/img/t800.png';
+    probe.onload = ()=>{ T800.start(); for(let t=0; t<DEMO; t+=16) T800.tick(16); };
+  }
   requestAnimationFrame(frame);
 })();
 

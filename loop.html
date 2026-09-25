@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VORTEX 84 · Loop</title>
+<style>
+/* ============================================================
+   VORTEX 84 screen loop: plays the screens in order with crossfades,
+   forever. Tetris runs two games (the second ends with the T-800)
+   and hands over when its finale is done. Click to go fullscreen.
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#05020c}
+body{cursor:pointer}
+body.idle{cursor:none}
+iframe{
+  position:fixed;inset:0;width:100%;height:100%;border:0;display:block;
+  pointer-events:none;opacity:0;transition:opacity 2s ease;
+}
+iframe.on{opacity:1}
+#hint{
+  position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);z-index:10;
+  font:14px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:#a596cf;background:rgba(5,2,12,.7);padding:8px 14px;border-radius:3px;
+  transition:opacity .6s ease;
+}
+body.fs #hint,body.idle #hint{opacity:0}
+</style>
+</head>
+<body>
+<p id="hint">Click for fullscreen</p>
+
+<script>
+/* Each entry: the page, and either a fixed duration or `until` a message from it.
+   `max` is a safety net so a stalled page can never hold the loop. */
+const SEQUENCE = [
+  { src:'tetris.html',      until:'vortex84:done', max:10*60e3 },
+  { src:'vortex.html',      ms:3*60e3 },
+  { src:'vortex-dark.html', ms:3*60e3 },
+  { src:'sunset.html',      ms:2*60e3 },
+];
+const FADE = 2000;
+
+(function loop(){
+  let i = -1, current = null, timer = null, waitingFor = null;
+
+  function next(){
+    clearTimeout(timer); waitingFor = null;
+    i = (i + 1) % SEQUENCE.length;
+    const item = SEQUENCE[i];
+    const f = document.createElement('iframe');
+    f.src = item.src + (item.src.includes('?') ? '&' : '?') + 'embed=1';
+    f.setAttribute('aria-hidden','true');
+    f.addEventListener('load', ()=>{
+      setTimeout(()=> f.classList.add('on'), 50);
+      const old = current; current = f;
+      if(old){ old.classList.remove('on'); setTimeout(()=> old.remove(), FADE + 100); }
+      if(item.until){ waitingFor = item.until; timer = setTimeout(next, item.max); }
+      else timer = setTimeout(next, item.ms);
+    }, {once:true});
+    document.body.insertBefore(f, document.getElementById('hint'));
+  }
+
+  addEventListener('message', e=>{
+    if(waitingFor && e.data === waitingFor && current && e.source === current.contentWindow) next();
+  });
+
+  next();
+})();
+
+/* ============================================================
+   Fullscreen on click, hide the cursor when idle, keep the screen awake.
+   ============================================================ */
+(function screen(){
+  const body = document.body;
+
+  body.addEventListener('click', ()=>{
+    const d = document, el = d.documentElement;
+    if(d.fullscreenElement || d.webkitFullscreenElement){
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    }else{
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(req) req.call(el);
+    }
+  });
+  const onFs = ()=> body.classList.toggle('fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
+  document.addEventListener('fullscreenchange', onFs);
+  document.addEventListener('webkitfullscreenchange', onFs);
+
+  let idle;
+  const wake = ()=>{ body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(()=>body.classList.add('idle'), 2500); };
+  addEventListener('mousemove', wake); wake();
+
+  let lock = null;
+  async function keepAwake(){
+    try{ if('wakeLock' in navigator && !lock){ lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', ()=>{ lock = null; }); } }catch(e){}
+  }
+  keepAwake();
+  body.addEventListener('click', keepAwake);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') keepAwake(); });
+})();
+</script>
+</body>
+</html>
