@@ -347,6 +347,10 @@ let energy = 0.25;
   const EMBED = params.has('embed');
   /* ?demo=<ms> fills the board, runs the finale and freezes it at that moment (for screenshots) */
   const DEMO = params.has('demo') ? +params.get('demo') : null;
+  /* ?finale=<s>: loop.html sets this so the T-800 steps in by then even mid-game,
+     keeping the screen to a fixed length */
+  const FINALE_AT = params.has('finale') ? +params.get('finale')*1000 : null;
+  let elapsed = 0, finaleForced = false;
 
   function emptyGrid(){ return Array.from({length:ROWS},()=>Array(COLS).fill(null)); }
   function draw7(){
@@ -561,6 +565,12 @@ let energy = 0.25;
 
   function frame(t){
     const dt = Math.min(100, t-last || 16); last = t;
+    elapsed += dt;
+    if(FINALE_AT !== null && !finaleForced && elapsed >= FINALE_AT && !T800.active && DEMO === null){
+      finaleForced = true; clearing = null; over = null; cur = null;
+      hi = Math.max(hi, score); hud();
+      T800.start();
+    }
     if(clearing){ clearing.t += dt; if(clearing.t>=380) finishClear(); }
     else if(over){ over.t += dt; if(over.t>=2900){ over = null; reset(); } }
     else if(T800.active){ T800.tick(DEMO !== null ? 0 : dt); }
