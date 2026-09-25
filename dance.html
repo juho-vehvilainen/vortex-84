@@ -100,6 +100,12 @@ body.live #title{opacity:1}
   border:1px solid rgba(165,150,207,.45);background:rgba(5,2,12,.6);color:#efe9ff;font-size:20px;line-height:1;
 }
 body.gated #mute,body.embed #mute{display:none}
+#credit{
+  position:fixed;left:16px;bottom:16px;z-index:6;margin:0;max-width:calc(100% - 96px);
+  font:11px/1.4 'Share Tech Mono',ui-monospace,monospace;letter-spacing:.06em;color:rgba(239,233,255,.6);
+}
+#credit a{color:inherit}
+body.gated #credit,body.embed #credit{display:none}
 </style>
 </head>
 <body>
@@ -116,6 +122,7 @@ body.gated #mute,body.embed #mute{display:none}
   <button id="enter" type="button">&#9654;&nbsp; Enter the dance floor</button>
 </div>
 <button id="mute" type="button" aria-label="Mute">&#128266;</button>
+<p id="credit">Music: <a href="https://soundcloud.com/doubleshot-audio/synthwave" target="_blank" rel="noopener">&ldquo;Synthwave&rdquo; by doubleshot-audio.com</a>, <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank" rel="noopener">CC BY-NC-SA 3.0</a></p>
 <audio id="track" loop preload="auto"></audio>
 
 <script>
@@ -126,8 +133,8 @@ body.gated #mute,body.embed #mute{display:none}
 (function dance(){
   const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
   const dc = document.createElement('canvas'), d = dc.getContext('2d');   // dancers, drawn once and reflected
-  /* measured from the site track: 111 BPM, first beat 0.501 s in */
-  const BPM = 111, BEAT_OFFSET = 0.501, BEATS_PER_MOVE = 16;
+  /* measured from the doubleshot-audio track: 105 BPM, first beat 0.540 s in */
+  const BPM = 105, BEAT_OFFSET = 0.540, BEATS_PER_MOVE = 16;
   const audio = document.getElementById('track');
   const MOVES = ['pump','travolta','runningman','clap'];
   const TAU = Math.PI*2;
@@ -529,16 +536,21 @@ body.gated #mute,body.embed #mute{display:none}
 
 
 /* ============================================================
-   Sound: tap to enter starts the track (plain <audio>, so iPhones
+   Sound: tap to enter starts the doubleshot-audio track (plain <audio>, so iPhones
    play it even with the ringer switch off). No sound inside loop.html.
    ============================================================ */
 (function sound(){
   const body = document.body, audio = document.getElementById('track');
   const embed = new URLSearchParams(location.search).has('embed');
   if(embed) return;
-  const m4a = 'assets/audio/turtlebeats-dark-synthwave-spectral-251688.m4a';
-  const mp3 = 'assets/audio/turtlebeats-dark-synthwave-spectral-251688.mp3';
-  audio.src = audio.canPlayType('audio/mp4; codecs="mp4a.40.2"') ? m4a : mp3;
+  audio.src = 'assets/audio/doubleshot-synthwave.mp3';
+  /* the track fades out at ~1:55 and ends in silence: jump back to the first beat
+     on a bar line just before the fade (50 bars of 4 at 105 BPM) */
+  const LOOP_END = 0.540 + 50*4*60/105, LOOP_START = 0.540;
+  (function seam(){
+    if(!audio.paused && audio.currentTime >= LOOP_END) audio.currentTime = LOOP_START + (audio.currentTime - LOOP_END);
+    requestAnimationFrame(seam);
+  })();
   audio.volume = 0.8;
   body.classList.add('gated');
   const mute = document.getElementById('mute');
