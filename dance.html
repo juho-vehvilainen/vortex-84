@@ -72,7 +72,6 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
   const BPM = 118, BEATS_PER_MOVE = 16;
   const MOVES = ['pump','travolta','runningman','clap'];
   const TAU = Math.PI*2;
-  const skull = new Image(); skull.src = 'assets/img/t800.png';
   const params = new URLSearchParams(location.search);
   let clock = +(params.get('t') || 0);                     // ?t= seek, for screenshots
   let stars=[],ridge=[],last=0,lastW=0,lastH=0,DPR=1,W=0,H=0;
@@ -202,8 +201,7 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
 
     if(robot){
       /* chrome endoskeleton */
-      const chrome = pass === 'rim' ? c.rim : (()=>{ const gr = g.createLinearGradient(X-0.1*h,0,X+0.1*h,0);
-        gr.addColorStop(0,'#5d6678'); gr.addColorStop(.35,'#eef3ff'); gr.addColorStop(.6,'#8994aa'); gr.addColorStop(1,'#2a303d'); return gr; })();
+      const chrome = pass === 'rim' ? c.rim : '#b8c0d0';
       for(const L of [LL, RL, LA, RA]){
         capsule(g, L[0], L[1], 0.035*h + rimW, chrome);
         capsule(g, L[1], L[2], 0.030*h + rimW, chrome);
@@ -224,19 +222,36 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
       }
       capsule(g, chest, head, 0.03*h + rimW, chrome);
       for(const A of [LA, RA]){ g.fillStyle = pass==='rim' ? c.rim : '#c9d1e2'; g.beginPath(); g.arc(A[2][0], A[2][1], 0.022*h + rimW/2, 0, TAU); g.fill(); }
-      /* the poster skull as the head; eyes flare on the beat */
-      const hw = 0.31*h, hh = hw*skull.height/(skull.width||1);
-      const ox = head[0] - hw*0.31, oy = head[1] - hh*0.44;
+      /* flat skull head, same style as the guys; eyes flare on the beat */
+      const hr = 0.085*h, hx = head[0], hyy = head[1] - 0.02*h;
+      const cran = ()=>{ g.beginPath(); g.ellipse(hx, hyy, hr*0.92, hr, p.lean, 0, TAU); };
+      const jaw = ()=>{ g.beginPath(); g.roundRect(hx - hr*0.62, hyy + hr*0.55, hr*1.24, hr*0.72, hr*0.28); };
       if(pass === 'rim'){
-        g.save(); g.shadowColor = c.rim; g.shadowBlur = 0.05*h;
-        g.fillStyle = c.rim; g.beginPath(); g.ellipse(head[0]+0.012*h, head[1]-0.03*h, 0.10*h, 0.13*h, 0, 0, TAU); g.fill(); g.restore();
-      }else if(skull.complete && skull.naturalWidth){
-        g.drawImage(skull, 0, 0, skull.width, skull.height*0.74, ox, oy, hw, hh*0.74);
+        g.fillStyle = c.rim; cran(); g.lineWidth = rimW; g.strokeStyle = c.rim; g.fill(); g.stroke();
+        jaw(); g.fill(); g.stroke();
+      }else{
+        g.fillStyle = '#c3cad8'; jaw(); g.fill();
+        g.fillStyle = '#d6dce8'; cran(); g.fill();
+        g.fillStyle = '#eef2fa';                                   // highlight on the dome
+        g.beginPath(); g.ellipse(hx - hr*0.35, hyy - hr*0.5, hr*0.28, hr*0.16, -0.5, 0, TAU); g.fill();
+        g.fillStyle = '#8b94a8';                                   // temple plates
+        for(const sx of [-1,1]){ g.beginPath(); g.ellipse(hx + sx*hr*0.78, hyy - hr*0.05, hr*0.16, hr*0.34, 0, 0, TAU); g.fill(); }
+        g.fillStyle = '#0a0a10';                                   // angular eye sockets under a frowning brow
+        for(const sx of [-1,1]){
+          g.beginPath();
+          g.moveTo(hx + sx*hr*0.08, hyy - hr*0.02); g.lineTo(hx + sx*hr*0.66, hyy - hr*0.20);
+          g.lineTo(hx + sx*hr*0.62, hyy + hr*0.20); g.lineTo(hx + sx*hr*0.16, hyy + hr*0.24); g.closePath(); g.fill();
+        }
+        g.beginPath();                                             // nose
+        g.moveTo(hx, hyy + hr*0.28); g.lineTo(hx - hr*0.12, hyy + hr*0.52); g.lineTo(hx + hr*0.12, hyy + hr*0.52); g.closePath(); g.fill();
+        g.fillStyle = '#0a0a10'; g.fillRect(hx - hr*0.56, hyy + hr*0.66, hr*1.12, hr*0.34);   // mouth
+        g.fillStyle = '#f4f6fb';
+        for(let i=0;i<6;i++){ g.fillRect(hx - hr*0.52 + i*hr*0.18, hyy + hr*0.68, hr*0.13, hr*0.13); g.fillRect(hx - hr*0.52 + i*hr*0.18, hyy + hr*0.85, hr*0.13, hr*0.13); }
         g.globalCompositeOperation = 'lighter';
-        for(const [ex,ey] of [[0.149,0.365],[0.451,0.349]]){
-          const x = ox + ex*hw, y = oy + ey*hh, R = 0.03*h*(0.8 + 0.8*p.bounce);
+        for(const sx of [-1,1]){
+          const x = hx + sx*hr*0.38, y = hyy + hr*0.06, R = hr*(0.45 + 0.45*p.bounce);
           const rg = g.createRadialGradient(x,y,0,x,y,R);
-          rg.addColorStop(0,'rgba(255,255,255,.9)'); rg.addColorStop(.3,'rgba(255,40,40,.8)'); rg.addColorStop(1,'rgba(255,0,0,0)');
+          rg.addColorStop(0,'rgba(255,255,255,.95)'); rg.addColorStop(.25,'rgba(255,40,40,.9)'); rg.addColorStop(1,'rgba(255,0,0,0)');
           g.fillStyle = rg; g.beginPath(); g.arc(x,y,R,0,TAU); g.fill();
         }
         g.globalCompositeOperation = 'source-over';
