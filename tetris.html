@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VORTEX 84 · Tetris</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   VORTEX 84 screen loop: Tetris that plays itself, over the
+   sunset backdrop from vortex.html. Click to go fullscreen.
+   ============================================================ */
+:root{
+  --magenta:#ff2d95;
+  --cyan:#22d3ee;
+  --violet:#7c3aed;
+  --text:#efe9ff;
+  --dim:#a596cf;
+  --cell:32px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#05020c;color:var(--text)}
+body{cursor:pointer;font-family:'Share Tech Mono',ui-monospace,Menlo,monospace}
+body.idle{cursor:none}
+
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+
+.stage{
+  position:fixed;inset:0;z-index:2;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  gap:calc(var(--cell)*1.1);
+}
+.side{display:flex;flex-direction:column;gap:calc(var(--cell)*.7)}
+.side.left{align-items:flex-end;text-align:right}
+.side.right{align-items:flex-start}
+
+.chrome{
+  background:linear-gradient(178deg,
+    #f4fbff 0%, #a8e2ff 22%, #3f86ff 44%,
+    #12224d 51%, #ff2d95 70%, #ffc4e9 92%, #fff 100%);
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 10px rgba(255,45,149,.65)) drop-shadow(0 0 40px rgba(43,108,255,.42));
+}
+.skew{display:inline-block;transform:skewX(-8deg)}
+.title{
+  font-family:'Orbitron',sans-serif;font-weight:900;line-height:.95;
+  font-size:calc(var(--cell)*1.9);letter-spacing:.02em;margin:0;
+}
+.tag{font-size:calc(var(--cell)*.42);letter-spacing:.3em;text-transform:uppercase;color:var(--dim);margin:0}
+
+.panel{
+  min-width:calc(var(--cell)*5.4);
+  padding:calc(var(--cell)*.45) calc(var(--cell)*.6);
+  border:1px solid rgba(255,45,149,.45);border-radius:3px;
+  background:linear-gradient(165deg,rgba(124,58,237,.22),rgba(8,3,18,.82));
+  box-shadow:0 0 24px rgba(255,45,149,.18),inset 0 0 18px rgba(124,58,237,.18);
+}
+.panel .k{font-size:calc(var(--cell)*.38);letter-spacing:.28em;text-transform:uppercase;color:var(--dim)}
+.panel .v{
+  font-family:'Orbitron',sans-serif;font-weight:700;font-size:calc(var(--cell)*.95);
+  color:#fff;text-shadow:0 0 6px #fff,0 0 18px var(--cyan);margin-top:.15em;
+  font-variant-numeric:tabular-nums;
+}
+#next{display:block;margin-top:calc(var(--cell)*.25)}
+
+.well{position:relative}
+#board{
+  display:block;
+  border:2px solid rgba(34,211,238,.7);border-radius:3px;
+  background:rgba(5,2,12,.8);
+  box-shadow:0 0 30px rgba(34,211,238,.35),0 0 80px rgba(255,45,149,.18),inset 0 0 30px rgba(124,58,237,.25);
+  transition:box-shadow .25s ease;
+}
+.well.hit #board{box-shadow:0 0 50px rgba(34,211,238,.8),0 0 140px rgba(255,45,149,.5),inset 0 0 40px rgba(124,58,237,.45)}
+
+#banner{
+  position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.6);
+  font-family:'Orbitron',sans-serif;font-weight:900;font-size:calc(var(--cell)*1.35);
+  white-space:nowrap;opacity:0;pointer-events:none;
+  transition:opacity .25s ease,transform .35s cubic-bezier(.2,1.6,.4,1);
+}
+#banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* CRT overlays, same as the site */
+.layer{position:fixed;inset:0;pointer-events:none;z-index:3}
+.scan{
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.30) 2px 3px);
+  opacity:.55;mix-blend-mode:multiply;
+}
+.sweep{
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(180,220,255,.055) 46%,rgba(255,255,255,0) 100%);
+  height:34vh;top:-34vh;bottom:auto;
+  animation:sweep 9s linear infinite;
+}
+@keyframes sweep{to{transform:translateY(140vh)}}
+.grain{
+  opacity:.10;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  animation:grain 620ms steps(4) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}
+  50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(0,0)}
+}
+.vig{
+  background:
+    radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 42%,rgba(0,0,0,.55) 82%,rgba(0,0,0,.9) 100%),
+    radial-gradient(60% 40% at 50% 100%,rgba(124,58,237,.16),rgba(0,0,0,0) 70%);
+}
+
+#hint{
+  position:fixed;left:50%;bottom:3vh;transform:translateX(-50%);z-index:4;
+  font:14px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:#a596cf;background:rgba(5,2,12,.7);padding:8px 14px;border-radius:3px;
+  transition:opacity .6s ease;
+}
+body.fs #hint,body.idle #hint{opacity:0}
+
+/* narrow screens: stack the side panels above the well */
+@media (max-aspect-ratio:1/1){
+  .stage{grid-template-columns:1fr;justify-items:center;align-content:center;gap:calc(var(--cell)*.5)}
+  .side.left,.side.right{flex-direction:row;align-items:center;text-align:left}
+  .side.left .tag{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="stage" aria-hidden="true">
+  <div class="side left">
+    <h1 class="title"><span class="chrome skew">VORTEX<br>84</span></h1>
+    <p class="tag">Autopilot engaged</p>
+    <div class="panel"><div class="k">Score</div><div class="v" id="score">0</div></div>
+    <div class="panel"><div class="k">High score</div><div class="v" id="hi">0</div></div>
+  </div>
+  <div class="well" id="well">
+    <canvas id="board"></canvas>
+    <div id="banner"><span class="chrome skew" id="bannerText">TETRIS</span></div>
+  </div>
+  <div class="side right">
+    <div class="panel"><div class="k">Next</div><canvas id="next"></canvas></div>
+    <div class="panel"><div class="k">Lines</div><div class="v" id="lines">0</div></div>
+    <div class="panel"><div class="k">Level</div><div class="v" id="level">1</div></div>
+  </div>
+</div>
+<div class="layer scan"></div>
+<div class="layer sweep"></div>
+<div class="layer grain"></div>
+<div class="layer vig"></div>
+<p id="hint">Click for fullscreen</p>
+
+<script>
+/* line clears kick this up; the backdrop reads it to speed the grid and bloom the sun */
+let energy = 0.25;
+
+/* ============================================================
+   1. Background canvas: sunset, grid horizon, starfield, ridge.
+   Same as vortex.html.
+   ============================================================ */
+(function background(){
+  const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+  let stars=[],ridge=[],phase=0,last=0,lastW=0,lastH=0,synth=0;
+
+  function makeStars(W,H){
+    const n = Math.min(260, Math.round(W*H/9000));
+    stars = Array.from({length:n},()=>({
+      x:Math.random()*W, y:Math.random()*H*0.72,
+      r:Math.random()*1.25+.25, tw:Math.random()*Math.PI*2,
+      sp:Math.random()*1.8+.4
+    }));
+  }
+  function makeRidge(W){
+    ridge = [];
+    let x = -40, seed = 1337;
+    const rnd = ()=> (seed = (seed*16807)%2147483647)/2147483647;
+    while(x < W+120){
+      const w = 60 + rnd()*140;
+      ridge.push({x, w, h: 26 + rnd()*88});
+      x += w*0.62;
+    }
+  }
+
+  function frame(t){
+    const dt = Math.min(0.05,(t-last)/1000)||0.016; last = t;
+
+    synth += dt;
+    const level = 0.28 + 0.12*Math.sin(synth*1.7) + 0.06*Math.sin(synth*3.9);
+    energy += (level - energy) * 0.04;
+
+    const DPR = Math.min(devicePixelRatio||1, 2);
+    const W = cv.clientWidth || innerWidth;
+    const H = cv.clientHeight || innerHeight;
+    const bw = Math.round(W*DPR), bh = Math.round(H*DPR);
+    if(cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; }
+    if(W !== lastW || H !== lastH){ lastW = W; lastH = H; makeStars(W,H); makeRidge(W); }
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    phase = (phase + dt*(0.12 + energy*0.30)) % 1;
+
+    const hy = H*0.76, cx = W*0.5, e = energy;
+
+    ctx.clearRect(0,0,W,H);
+
+    let sky = ctx.createLinearGradient(0,0,0,hy);
+    sky.addColorStop(0,'#05020c'); sky.addColorStop(.55,'#170a2e'); sky.addColorStop(1,'#4a1152');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,hy);
+
+    for(const s of stars){
+      s.tw += dt*s.sp;
+      const a = (0.35 + 0.45*Math.sin(s.tw)) * (0.6 + e*0.7);
+      ctx.globalAlpha = Math.max(0,Math.min(1,a));
+      ctx.fillStyle = '#dbe7ff';
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    const R = Math.min(W,H)*0.26;
+    const g = ctx.createLinearGradient(0,hy-R,0,hy+R*0.25);
+    g.addColorStop(0,'#ffe36a'); g.addColorStop(.45,'#ff6a1f'); g.addColorStop(1,'#ff2d95');
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,hy,R,Math.PI,0); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = g; ctx.fillRect(cx-R,hy-R,R*2,R*1.2);
+    ctx.fillStyle = 'rgba(10,3,20,.92)';
+    for(let i=1;i<10;i++){
+      const p = i/10;
+      const y = hy - R + R*Math.pow(p,0.6)*1.02;
+      ctx.fillRect(cx-R, y, R*2, 2 + p*9);
+    }
+    ctx.restore();
+    ctx.globalAlpha = Math.min(1, .18 + e*.22);
+    const bl = ctx.createRadialGradient(cx,hy,R*.3,cx,hy,R*2.6);
+    bl.addColorStop(0,'#ff6a1f'); bl.addColorStop(1,'rgba(255,106,31,0)');
+    ctx.fillStyle = bl; ctx.fillRect(0,0,W,hy+R);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#180a2b';
+    ctx.beginPath(); ctx.moveTo(-40,hy);
+    for(const m of ridge){ ctx.lineTo(m.x+m.w*0.5, hy-m.h); ctx.lineTo(m.x+m.w, hy); }
+    ctx.lineTo(W+80,hy); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,45,149,'+Math.min(1,0.30+e*0.35)+')';
+    ctx.lineWidth = 1.2; ctx.stroke();
+
+    let gr = ctx.createLinearGradient(0,hy,0,H);
+    gr.addColorStop(0,'#12061f'); gr.addColorStop(1,'#05020c');
+    ctx.fillStyle = gr; ctx.fillRect(0,hy,W,H-hy);
+
+    const ROWS = 18, depth = H-hy;
+    ctx.lineWidth = 1;
+    for(let i=0;i<ROWS;i++){
+      const p = (i+phase)/ROWS;
+      const y = hy + depth*Math.pow(p,2.7);
+      const a = Math.min(1,(0.10 + 0.55*p) * (0.55 + e*0.7));
+      ctx.strokeStyle = 'rgba(34,211,238,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+    const SP = Math.max(60, W/9);
+    for(let k=-14;k<=14;k++){
+      const a = Math.min(1,(0.30 - Math.abs(k)*0.016) * (0.55 + e*0.7));
+      if(a<=0) continue;
+      ctx.strokeStyle = 'rgba(255,45,149,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(cx,hy); ctx.lineTo(cx + k*SP, H); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,'+Math.min(1,0.30+e*0.45)+')';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(0,hy); ctx.lineTo(W,hy); ctx.stroke();
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ============================================================
+   2. Tetris on autopilot.
+   A one-piece greedy bot picks the rotation and column that score
+   best on height, holes, bumpiness and lines cleared, then the piece
+   is animated there: rotate, slide, soft drop. Game over resets.
+   ============================================================ */
+(function tetris(){
+  const COLS = 10, ROWS = 20;
+  const NOISE_PER_LEVEL = 0.3;
+  const PIECES = {
+    I:{c:'#22d3ee', cells:[[0,1],[1,1],[2,1],[3,1]], rots:2},
+    O:{c:'#ffb020', cells:[[0,0],[1,0],[0,1],[1,1]], rots:1},
+    T:{c:'#a855f7', cells:[[1,0],[0,1],[1,1],[2,1]], rots:4},
+    S:{c:'#4ade80', cells:[[1,0],[2,0],[0,1],[1,1]], rots:2},
+    Z:{c:'#ff2d95', cells:[[0,0],[1,0],[1,1],[2,1]], rots:2},
+    J:{c:'#2b6cff', cells:[[0,0],[0,1],[1,1],[2,1]], rots:4},
+    L:{c:'#ff6a1f', cells:[[2,0],[0,1],[1,1],[2,1]], rots:4},
+  };
+  /* precompute rotations, each normalised to start at 0,0 */
+  for(const k in PIECES){
+    const p = PIECES[k]; p.shapes = [];
+    let cells = p.cells;
+    for(let r=0;r<p.rots;r++){
+      const mx = Math.min(...cells.map(c=>c[0])), my = Math.min(...cells.map(c=>c[1]));
+      p.shapes.push(cells.map(([x,y])=>[x-mx,y-my]));
+      cells = cells.map(([x,y])=>[-y,x]);
+    }
+  }
+
+  const board = document.getElementById('board'), bctx = board.getContext('2d');
+  const next = document.getElementById('next'), nctx = next.getContext('2d');
+  const well = document.getElementById('well');
+  const banner = document.getElementById('banner'), bannerText = document.getElementById('bannerText');
+  const $score = document.getElementById('score'), $hi = document.getElementById('hi');
+  const $lines = document.getElementById('lines'), $level = document.getElementById('level');
+
+  let grid, bag = [], cur, nextKey, target, score, lines, level, hi = 0;
+  let clearing = null, over = null, acc = 0, last = 0, CELL = 32;
+
+  function emptyGrid(){ return Array.from({length:ROWS},()=>Array(COLS).fill(null)); }
+  function draw7(){
+    if(!bag.length){ bag = Object.keys(PIECES); for(let i=bag.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [bag[i],bag[j]]=[bag[j],bag[i]]; } }
+    return bag.pop();
+  }
+  function fits(g, shape, x, y){
+    for(const [cx,cy] of shape){
+      const gx = x+cx, gy = y+cy;
+      if(gx<0 || gx>=COLS || gy>=ROWS) return false;
+      if(gy>=0 && g[gy][gx]) return false;
+    }
+    return true;
+  }
+
+  /* ---- the bot ---- */
+  function evaluate(g, shape, x){
+    if(!fits(g, shape, x, -2)) return null;
+    let y = -2; while(fits(g, shape, x, y+1)) y++;
+    const t = g.map(r=>r.slice());
+    for(const [cx,cy] of shape){ if(y+cy<0) return null; t[y+cy][x+cx] = 1; }
+    let cleared = 0;
+    for(let r=ROWS-1;r>=0;r--){ if(t[r].every(Boolean)){ t.splice(r,1); t.unshift(Array(COLS).fill(null)); cleared++; r++; } }
+    const h = Array(COLS).fill(0); let holes = 0;
+    for(let c=0;c<COLS;c++){
+      let seen = false;
+      for(let r=0;r<ROWS;r++){
+        if(t[r][c]){ if(!seen){ h[c] = ROWS-r; seen = true; } }
+        else if(seen) holes++;
+      }
+    }
+    let agg = 0, bump = 0;
+    for(let c=0;c<COLS;c++){ agg += h[c]; if(c) bump += Math.abs(h[c]-h[c-1]); }
+    return -0.510066*agg + 0.760666*cleared - 0.35663*holes - 0.184483*bump;
+  }
+  function plan(key){
+    const p = PIECES[key]; let best = null;
+    const noise = 0.3 + (level-1)*NOISE_PER_LEVEL;
+    for(let r=0;r<p.shapes.length;r++){
+      const w = Math.max(...p.shapes[r].map(c=>c[0]))+1;
+      for(let x=0;x<=COLS-w;x++){
+        let s = evaluate(grid, p.shapes[r], x);
+        if(s===null) continue;
+        s += Math.random()*noise;             // human error that grows with level, so games end
+        if(!best || s>best.s) best = {r,x,s};
+      }
+    }
+    return best || {r:0,x:3};
+  }
+
+  /* ---- game flow ---- */
+  function reset(){
+    grid = emptyGrid(); score = 0; lines = 0; level = 1; bag = [];
+    nextKey = draw7(); spawn(); hud();
+  }
+  function spawn(){
+    const key = nextKey; nextKey = draw7();
+    const shape = PIECES[key].shapes[0];
+    const w = Math.max(...shape.map(c=>c[0]))+1;
+    cur = {key, r:0, x:Math.floor((COLS-w)/2), y:-1};
+    if(!fits(grid, shape, cur.x, cur.y)){ gameOver(); return; }
+    target = plan(key);
+    drawNext();
+  }
+  function shapeOf(p){ return PIECES[p.key].shapes[p.r]; }
+  function lock(){
+    for(const [cx,cy] of shapeOf(cur)){
+      if(cur.y+cy<0){ gameOver(); return; }
+      grid[cur.y+cy][cur.x+cx] = PIECES[cur.key].c;
+    }
+    const full = [];
+    for(let r=0;r<ROWS;r++) if(grid[r].every(Boolean)) full.push(r);
+    cur = null;
+    if(full.length){ clearing = {rows:full, t:0}; }
+    else spawn();
+  }
+  function finishClear(){
+    const n = clearing.rows.length;
+    for(const r of clearing.rows){ grid.splice(r,1); grid.unshift(Array(COLS).fill(null)); }
+    clearing = null;
+    lines += n;
+    score += [0,100,300,500,800][n]*level;
+    level = Math.floor(lines/10)+1;
+    energy = Math.min(1.6, energy + 0.25*n);
+    well.classList.add('hit'); setTimeout(()=>well.classList.remove('hit'), 260);
+    if(n===4) flash('TETRIS'); else if(n===3) flash('TRIPLE');
+    hud(); spawn();
+  }
+  function gameOver(){
+    cur = null; over = {t:0};
+    hi = Math.max(hi, score); hud();
+    flash('GAME OVER', 2600);
+  }
+  function flash(text, ms=1300){
+    bannerText.textContent = text;
+    banner.classList.add('show');
+    clearTimeout(flash.t); flash.t = setTimeout(()=>banner.classList.remove('show'), ms);
+  }
+  function hud(){
+    $score.textContent = score.toLocaleString('en-US');
+    $hi.textContent = Math.max(hi,score).toLocaleString('en-US');
+    $lines.textContent = lines; $level.textContent = level;
+  }
+
+  /* one bot action per step: rotate, then slide, then fall */
+  function step(){
+    const aligned = cur.r===target.r && cur.x===target.x;
+    if(!aligned){
+      if(cur.r!==target.r){
+        const nr = (cur.r+1) % PIECES[cur.key].shapes.length;
+        const s = PIECES[cur.key].shapes[nr];
+        if(fits(grid, s, cur.x, cur.y)) cur.r = nr;
+        else if(fits(grid, s, cur.x-1, cur.y)){ cur.r = nr; cur.x--; }
+        else target = {r:cur.r, x:cur.x};      // blocked: settle where we are
+        return;
+      }
+      const dx = Math.sign(target.x-cur.x);
+      if(fits(grid, shapeOf(cur), cur.x+dx, cur.y)) cur.x += dx;
+      else target.x = cur.x;
+      return;
+    }
+    if(fits(grid, shapeOf(cur), cur.x, cur.y+1)){ cur.y++; score += 1; if(cur.y%4===0) hud(); }
+    else lock();
+  }
+  function stepMs(){
+    const aligned = cur && cur.r===target.r && cur.x===target.x;
+    if(!aligned) return 95;                              // deliberate, readable moves
+    return Math.max(22, 70 - (level-1)*4);               // soft drop quickens with level
+  }
+
+  /* ---- rendering ---- */
+  function size(){
+    const byH = (innerHeight*0.86)/ROWS;
+    const byW = innerWidth > innerHeight ? (innerWidth*0.36)/COLS : (innerWidth*0.8)/COLS;
+    CELL = Math.max(12, Math.floor(Math.min(byH, byW)));
+    document.documentElement.style.setProperty('--cell', CELL+'px');
+    const DPR = Math.min(devicePixelRatio||1, 2);
+    board.width = COLS*CELL*DPR; board.height = ROWS*CELL*DPR;
+    board.style.width = COLS*CELL+'px'; board.style.height = ROWS*CELL+'px';
+    bctx.setTransform(DPR,0,0,DPR,0,0);
+    next.width = 4*CELL*DPR; next.height = 2.6*CELL*DPR;
+    next.style.width = 4*CELL+'px'; next.style.height = 2.6*CELL+'px';
+    nctx.setTransform(DPR,0,0,DPR,0,0);
+    drawNext();
+  }
+  function block(ctx, x, y, s, color, alpha=1){
+    const p = Math.max(1, s*0.06);
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = color; ctx.shadowBlur = s*0.45;
+    ctx.fillStyle = color;
+    ctx.fillRect(x+p, y+p, s-2*p, s-2*p);
+    ctx.shadowBlur = 0;
+    const g = ctx.createLinearGradient(x, y, x, y+s);
+    g.addColorStop(0,'rgba(255,255,255,.55)'); g.addColorStop(.45,'rgba(255,255,255,.05)'); g.addColorStop(1,'rgba(0,0,0,.35)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x+p, y+p, s-2*p, s-2*p);
+    ctx.fillStyle = 'rgba(255,255,255,.8)';
+    ctx.fillRect(x+p*2, y+p*2, s*0.28, p*1.4);
+    ctx.globalAlpha = 1;
+  }
+  function drawNext(){
+    if(!nextKey) return;
+    const s = CELL*0.8, shape = PIECES[nextKey].shapes[0];
+    const w = Math.max(...shape.map(c=>c[0]))+1, h = Math.max(...shape.map(c=>c[1]))+1;
+    const ox = (4*CELL - w*s)/2, oy = (2.6*CELL - h*s)/2;
+    nctx.clearRect(0,0,4*CELL,2.6*CELL);
+    for(const [cx,cy] of shape) block(nctx, ox+cx*s, oy+cy*s, s, PIECES[nextKey].c);
+  }
+  function render(){
+    const W = COLS*CELL, H = ROWS*CELL;
+    bctx.clearRect(0,0,W,H);
+
+    /* faint well grid */
+    bctx.strokeStyle = 'rgba(165,150,207,.08)'; bctx.lineWidth = 1;
+    for(let c=1;c<COLS;c++){ bctx.beginPath(); bctx.moveTo(c*CELL+.5,0); bctx.lineTo(c*CELL+.5,H); bctx.stroke(); }
+    for(let r=1;r<ROWS;r++){ bctx.beginPath(); bctx.moveTo(0,r*CELL+.5); bctx.lineTo(W,r*CELL+.5); bctx.stroke(); }
+
+    /* settled blocks; game over greys them out row by row from the bottom */
+    const greyTo = over ? ROWS - Math.floor(over.t/45) : ROWS;
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      const col = grid[r][c]; if(!col) continue;
+      if(clearing && clearing.rows.includes(r)) continue;
+      block(bctx, c*CELL, r*CELL, CELL, r>=greyTo ? '#3a2d5c' : col);
+    }
+
+    /* rows being cleared flash white, then shrink to a line */
+    if(clearing){
+      const k = clearing.t/380;
+      for(const r of clearing.rows){
+        const on = Math.floor(clearing.t/70)%2===0;
+        const hh = CELL*(1-Math.max(0,k-0.55)/0.45);
+        bctx.shadowColor = '#fff'; bctx.shadowBlur = CELL;
+        bctx.fillStyle = on ? '#ffffff' : 'rgba(34,211,238,.9)';
+        bctx.fillRect(0, r*CELL + (CELL-hh)/2, W, Math.max(1,hh));
+        bctx.shadowBlur = 0;
+      }
+    }
+
+    if(cur){
+      const shape = shapeOf(cur), color = PIECES[cur.key].c;
+      /* ghost: where the current piece will land */
+      let gy = cur.y; while(fits(grid, shape, cur.x, gy+1)) gy++;
+      bctx.strokeStyle = color; bctx.globalAlpha = .45; bctx.lineWidth = 1.5;
+      for(const [cx,cy] of shape) if(gy+cy>=0) bctx.strokeRect((cur.x+cx)*CELL+3, (gy+cy)*CELL+3, CELL-6, CELL-6);
+      bctx.globalAlpha = 1;
+      for(const [cx,cy] of shape) if(cur.y+cy>=0) block(bctx, (cur.x+cx)*CELL, (cur.y+cy)*CELL, CELL, color);
+    }
+  }
+
+  function frame(t){
+    const dt = Math.min(100, t-last || 16); last = t;
+    if(clearing){ clearing.t += dt; if(clearing.t>=380) finishClear(); }
+    else if(over){ over.t += dt; if(over.t>=2900){ over = null; reset(); } }
+    else if(cur){
+      acc += dt;
+      let guard = 0;
+      while(cur && acc >= stepMs() && guard++<8){ acc -= stepMs(); step(); }
+      if(!cur) acc = 0;
+    }
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  addEventListener('resize', size);
+  size(); reset();
+  requestAnimationFrame(frame);
+})();
+
+/* ============================================================
+   3. Fullscreen on click, hide the cursor when idle, keep the screen awake.
+   ============================================================ */
+(function screen(){
+  const body = document.body;
+
+  body.addEventListener('click', ()=>{
+    const d = document, el = d.documentElement;
+    if(d.fullscreenElement || d.webkitFullscreenElement){
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    }else{
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(req) req.call(el);
+    }
+  });
+  const onFs = ()=> body.classList.toggle('fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
+  document.addEventListener('fullscreenchange', onFs);
+  document.addEventListener('webkitfullscreenchange', onFs);
+
+  let idle;
+  const wake = ()=>{ body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(()=>body.classList.add('idle'), 2500); };
+  addEventListener('mousemove', wake); wake();
+
+  let lock = null;
+  async function keepAwake(){
+    try{ if('wakeLock' in navigator && !lock){ lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', ()=>{ lock = null; }); } }catch(e){}
+  }
+  keepAwake();
+  body.addEventListener('click', keepAwake);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') keepAwake(); });
+})();
+</script>
+</body>
+</html>
