@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VORTEX 84 · Screen (dark)</title>
+<style>
+/* ============================================================
+   VORTEX 84 screen loop, dark variant: black void, purple glow,
+   particles spiralling into the vortex. Click to go fullscreen.
+   ============================================================ */
+:root{
+  --magenta:#ff2d95;
+  --cyan:#22d3ee;
+  --violet:#7c3aed;
+  --size:min(66vmin,860px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#000}
+body{cursor:pointer}
+body.idle{cursor:none}
+
+#dust{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:1}
+
+/* purple nebula: two soft blobs breathing out of phase, plus a slow-turning haze */
+.glow{position:fixed;left:50%;top:50%;border-radius:50%;pointer-events:none;z-index:0;transform:translate(-50%,-50%)}
+.glow.g1{
+  width:calc(var(--size)*2.4);aspect-ratio:1;
+  background:radial-gradient(closest-side,rgba(124,58,237,.55),rgba(88,28,180,.24) 45%,rgba(40,8,90,0) 100%);
+  animation:breathe 7s ease-in-out infinite;
+}
+.glow.g2{
+  width:calc(var(--size)*1.5);aspect-ratio:1;
+  background:radial-gradient(closest-side,rgba(190,60,255,.30),rgba(124,58,237,.10) 55%,rgba(0,0,0,0) 100%);
+  animation:breathe 7s ease-in-out -3.5s infinite;
+}
+.glow.haze{
+  width:calc(var(--size)*1.9);aspect-ratio:1;
+  background:conic-gradient(from 0deg,
+    rgba(255,45,149,0) 0deg, rgba(255,45,149,.10) 60deg, rgba(124,58,237,0) 140deg,
+    rgba(34,211,238,0) 200deg, rgba(34,211,238,.07) 260deg, rgba(124,58,237,0) 330deg);
+  mask:radial-gradient(closest-side,transparent 30%,#000 55%,transparent 100%);
+  -webkit-mask:radial-gradient(closest-side,transparent 30%,#000 55%,transparent 100%);
+  filter:blur(30px);
+  animation:turn 40s linear infinite;
+}
+@keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(.9);opacity:.75}50%{transform:translate(-50%,-50%) scale(1.08);opacity:1}}
+@keyframes turn{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+.stage{position:fixed;inset:0;display:grid;place-items:center;z-index:2}
+.spinner{position:relative;display:grid;place-items:center;width:var(--size);aspect-ratio:1}
+.ring{
+  position:absolute;border-radius:50%;aspect-ratio:1;
+  background:conic-gradient(from 0deg,
+    rgba(255,45,149,0) 0deg, var(--magenta) 40deg, rgba(255,45,149,0) 110deg,
+    rgba(34,211,238,0) 190deg, var(--cyan) 240deg, rgba(34,211,238,0) 320deg);
+  mask:radial-gradient(closest-side,transparent 74%,#000 82%,#000 98%,transparent 100%);
+  -webkit-mask:radial-gradient(closest-side,transparent 74%,#000 82%,#000 98%,transparent 100%);
+  will-change:transform;
+}
+/* blurred twin behind each ring = neon bloom */
+.ring.bloom{filter:blur(18px);opacity:.7}
+.r1{width:100%;animation:spin 9s linear infinite}
+.r2{width:70%;animation:spin 6s linear infinite reverse}
+.r3{width:44%;animation:spin 3.6s linear infinite}
+.ring.r2:not(.bloom){opacity:.9}
+.ring.r3:not(.bloom){opacity:.85}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* thin outer halo ring, very slow */
+.halo{
+  position:absolute;width:128%;aspect-ratio:1;border-radius:50%;
+  border:1px solid rgba(190,140,255,.16);
+  box-shadow:0 0 40px rgba(124,58,237,.25),inset 0 0 40px rgba(124,58,237,.18);
+  animation:halo 7s ease-in-out infinite;
+}
+@keyframes halo{0%,100%{transform:scale(.97);opacity:.5}50%{transform:scale(1.03);opacity:1}}
+
+.core{
+  position:relative;width:26%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,var(--cyan) 30%,var(--violet) 62%,rgba(0,0,0,0) 78%);
+  box-shadow:0 0 60px rgba(124,58,237,.6),0 0 140px rgba(124,58,237,.35);
+  animation:pulse 2.6s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(.85);opacity:.8}50%{transform:scale(1.1);opacity:1}}
+
+/* CRT overlays, lighter than the sunset version so the black stays black */
+.layer{position:fixed;inset:0;pointer-events:none;z-index:3}
+.scan{
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.35) 2px 3px);
+  opacity:.5;
+}
+.sweep{
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(190,160,255,.04) 46%,rgba(255,255,255,0) 100%);
+  height:34vh;top:-34vh;bottom:auto;
+  animation:sweep 11s linear infinite;
+}
+@keyframes sweep{to{transform:translateY(140vh)}}
+.grain{
+  opacity:.06;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  animation:grain 620ms steps(4) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}
+  50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(0,0)}
+}
+.vig{background:radial-gradient(110% 85% at 50% 50%,rgba(0,0,0,0) 45%,rgba(0,0,0,.7) 85%,#000 100%)}
+
+#hint{
+  position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);z-index:4;
+  font:14px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:#a596cf;background:rgba(0,0,0,.7);padding:8px 14px;border-radius:3px;
+  transition:opacity .6s ease;
+}
+body.fs #hint,body.idle #hint{opacity:0}
+</style>
+</head>
+<body>
+<div class="glow g1"></div>
+<div class="glow g2"></div>
+<div class="glow haze"></div>
+<canvas id="dust" aria-hidden="true"></canvas>
+<div class="stage" aria-hidden="true">
+  <span class="spinner">
+    <span class="halo"></span>
+    <span class="ring bloom r1"></span>
+    <span class="ring bloom r2"></span>
+    <span class="ring bloom r3"></span>
+    <span class="ring r1"></span>
+    <span class="ring r2"></span>
+    <span class="ring r3"></span>
+    <span class="core"></span>
+  </span>
+</div>
+<div class="layer scan"></div>
+<div class="layer sweep"></div>
+<div class="layer grain"></div>
+<div class="layer vig"></div>
+<p id="hint">Click for fullscreen</p>
+
+<script>
+/* ============================================================
+   Particles: specks drift in from the dark, spiral clockwise and
+   fall into the core, then respawn at the edge. Short trails via
+   a partial erase each frame.
+   ============================================================ */
+(function dust(){
+  const cv = document.getElementById('dust'), ctx = cv.getContext('2d');
+  const COLORS = ['#b58cff','#ff5cc8','#22d3ee','#e9ddff','#7c3aed'];
+  let W=0,H=0,DPR=1,cx=0,cy=0,maxR=0,coreR=0,parts=[],last=0;
+
+  function spawn(p, anywhere){
+    p.a  = Math.random()*Math.PI*2;
+    p.r  = anywhere ? coreR + Math.random()*(maxR-coreR) : maxR*(0.85+Math.random()*0.3);
+    p.w  = (0.10 + Math.random()*0.25);          // base angular speed, rad/s at edge
+    p.in = 18 + Math.random()*40;                 // inward drift, px/s at edge
+    p.s  = Math.random()*1.4 + 0.4;
+    p.c  = COLORS[(Math.random()*COLORS.length)|0];
+    return p;
+  }
+  function resize(){
+    DPR = Math.min(devicePixelRatio||1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    cx = W/2; cy = H/2;
+    maxR = Math.hypot(W,H)*0.55;
+    coreR = Math.min(W,H)*0.66*0.13;
+    const n = Math.min(700, Math.round(W*H/3200));
+    parts = Array.from({length:n}, ()=>spawn({}, true));
+  }
+
+  function frame(t){
+    const dt = Math.min(0.05,(t-last)/1000)||0.016; last = t;
+    // fade old trails to transparent, not black, so the glow behind shows through
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation = 'lighter';
+    for(const p of parts){
+      const k = maxR / Math.max(p.r, coreR);      // closer = faster, like a drain
+      p.a += p.w * Math.pow(k, 0.9) * dt;
+      p.r -= p.in * Math.pow(k, 0.5) * dt;
+      if(p.r <= coreR){ spawn(p, false); continue; }
+      const x = cx + Math.cos(p.a)*p.r;
+      const y = cy + Math.sin(p.a)*p.r*0.92;
+      const fadeIn  = Math.min(1, (maxR - p.r)/(maxR*0.25) + 0.05);
+      const fadeOut = Math.min(1, (p.r - coreR)/(coreR*1.5));
+      ctx.globalAlpha = Math.max(0, fadeIn*fadeOut) * 0.85;
+      ctx.fillStyle = p.c;
+      ctx.beginPath(); ctx.arc(x,y,p.s,0,6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(frame);
+})();
+
+/* ============================================================
+   Fullscreen on click, hide the cursor when idle, keep the screen awake.
+   ============================================================ */
+(function screen(){
+  const body = document.body;
+
+  body.addEventListener('click', ()=>{
+    const d = document, el = d.documentElement;
+    if(d.fullscreenElement || d.webkitFullscreenElement){
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    }else{
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(req) req.call(el);
+    }
+  });
+  const onFs = ()=> body.classList.toggle('fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
+  document.addEventListener('fullscreenchange', onFs);
+  document.addEventListener('webkitfullscreenchange', onFs);
+
+  let idle;
+  const wake = ()=>{ body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(()=>body.classList.add('idle'), 2500); };
+  addEventListener('mousemove', wake); wake();
+
+  let lock = null;
+  async function keepAwake(){
+    try{ if('wakeLock' in navigator && !lock){ lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', ()=>{ lock = null; }); } }catch(e){}
+  }
+  keepAwake();
+  body.addEventListener('click', keepAwake);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') keepAwake(); });
+})();
+</script>
+</body>
+</html>
