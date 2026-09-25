@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VORTEX 84 · Night Drive</title>
+<style>
+/* ============================================================
+   VORTEX 84 night drive: the sunset backdrop with a black 80s sports car
+   driving into the sun across the grid. For a TV or projector all night. Click to go fullscreen.
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#05020c}
+body{cursor:pointer}
+body.idle{cursor:none}
+
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+
+/* CRT overlays, same as the site */
+.layer{position:fixed;inset:0;pointer-events:none;z-index:3}
+.scan{
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.30) 2px 3px);
+  opacity:.55;mix-blend-mode:multiply;
+}
+.sweep{
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(180,220,255,.055) 46%,rgba(255,255,255,0) 100%);
+  height:34vh;top:-34vh;bottom:auto;
+  animation:sweep 9s linear infinite;
+}
+@keyframes sweep{to{transform:translateY(140vh)}}
+.grain{
+  opacity:.10;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  animation:grain 620ms steps(4) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}
+  50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(0,0)}
+}
+.vig{
+  background:
+    radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 42%,rgba(0,0,0,.55) 82%,rgba(0,0,0,.9) 100%),
+    radial-gradient(60% 40% at 50% 100%,rgba(124,58,237,.16),rgba(0,0,0,0) 70%);
+}
+
+#hint{
+  position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);z-index:4;
+  font:14px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:#a596cf;background:rgba(5,2,12,.7);padding:8px 14px;border-radius:3px;
+  transition:opacity .6s ease;
+}
+body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="layer scan"></div>
+<div class="layer sweep"></div>
+<div class="layer grain"></div>
+<div class="layer vig"></div>
+<p id="hint">Click for fullscreen</p>
+
+<script>
+/* ============================================================
+   Background canvas: sunset, grid horizon, starfield, ridge.
+   Copied from index.html; no audio here, so energy is a slow synthetic pulse.
+   ============================================================ */
+(function background(){
+  const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+  let stars=[],ridge=[],phase=0,last=0,lastW=0,lastH=0,clock=0,synth=0,energy=0.25;
+
+  function makeStars(W,H){
+    const n = Math.min(260, Math.round(W*H/9000));
+    stars = Array.from({length:n},()=>({
+      x:Math.random()*W, y:Math.random()*H*0.72,
+      r:Math.random()*1.25+.25, tw:Math.random()*Math.PI*2,
+      sp:Math.random()*1.8+.4
+    }));
+  }
+  function makeRidge(W){
+    ridge = [];
+    let x = -40, seed = 1337;
+    const rnd = ()=> (seed = (seed*16807)%2147483647)/2147483647;
+    while(x < W+120){
+      const w = 60 + rnd()*140;
+      ridge.push({x, w, h: 26 + rnd()*88});
+      x += w*0.62;
+    }
+  }
+
+  function frame(t){
+    const dt = Math.min(0.05,(t-last)/1000)||0.016; last = t;
+
+    synth += dt;
+    const level = 0.30 + 0.14*Math.sin(synth*1.7) + 0.07*Math.sin(synth*3.9);
+    energy += (level - energy) * 0.06;
+
+    const DPR = Math.min(devicePixelRatio||1, 2);
+    const W = cv.clientWidth || innerWidth;
+    const H = cv.clientHeight || innerHeight;
+    const bw = Math.round(W*DPR), bh = Math.round(H*DPR);
+    if(cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; }
+    if(W !== lastW || H !== lastH){ lastW = W; lastH = H; makeStars(W,H); makeRidge(W); }
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    phase = (phase + dt*(0.55 + energy*0.25)) % 1;
+    clock += dt;
+    /* the car drifts slowly across the lane; the world slides the other way */
+    const sway = Math.sin(clock*0.23)*W*0.035 + Math.sin(clock*0.61)*W*0.008;
+    const swayV = Math.cos(clock*0.23)*0.23*W*0.035 + Math.cos(clock*0.61)*0.61*W*0.008;
+
+    const hy = H*0.76, cx = W*0.5, e = energy;
+
+    ctx.clearRect(0,0,W,H);
+
+    let sky = ctx.createLinearGradient(0,0,0,hy);
+    sky.addColorStop(0,'#05020c'); sky.addColorStop(.55,'#170a2e'); sky.addColorStop(1,'#4a1152');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,hy);
+
+    for(const s of stars){
+      s.tw += dt*s.sp;
+      const a = (0.35 + 0.45*Math.sin(s.tw)) * (0.6 + e*0.7);
+      ctx.globalAlpha = Math.max(0,Math.min(1,a));
+      ctx.fillStyle = '#dbe7ff';
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    const R = Math.min(W,H)*0.26;
+    const g = ctx.createLinearGradient(0,hy-R,0,hy+R*0.25);
+    g.addColorStop(0,'#ffe36a'); g.addColorStop(.45,'#ff6a1f'); g.addColorStop(1,'#ff2d95');
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx,hy,R,Math.PI,0); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = g; ctx.fillRect(cx-R,hy-R,R*2,R*1.2);
+    ctx.fillStyle = 'rgba(10,3,20,.92)';
+    for(let i=1;i<10;i++){
+      const p = i/10;
+      const y = hy - R + R*Math.pow(p,0.6)*1.02;
+      ctx.fillRect(cx-R, y, R*2, 2 + p*9);
+    }
+    ctx.restore();
+    ctx.globalAlpha = .18 + e*.22;
+    const bl = ctx.createRadialGradient(cx,hy,R*.3,cx,hy,R*2.6);
+    bl.addColorStop(0,'#ff6a1f'); bl.addColorStop(1,'rgba(255,106,31,0)');
+    ctx.fillStyle = bl; ctx.fillRect(0,0,W,hy+R);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#180a2b';
+    ctx.beginPath(); ctx.moveTo(-40,hy);
+    for(const m of ridge){ ctx.lineTo(m.x+m.w*0.5, hy-m.h); ctx.lineTo(m.x+m.w, hy); }
+    ctx.lineTo(W+80,hy); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,45,149,'+(0.30+e*0.35)+')';
+    ctx.lineWidth = 1.2; ctx.stroke();
+
+    let gr = ctx.createLinearGradient(0,hy,0,H);
+    gr.addColorStop(0,'#12061f'); gr.addColorStop(1,'#05020c');
+    ctx.fillStyle = gr; ctx.fillRect(0,hy,W,H-hy);
+
+    const ROWS = 18, depth = H-hy;
+    ctx.lineWidth = 1;
+    for(let i=0;i<ROWS;i++){
+      const p = (i+phase)/ROWS;
+      const y = hy + depth*Math.pow(p,2.7);
+      const a = (0.10 + 0.55*p) * (0.55 + e*0.7);
+      ctx.strokeStyle = 'rgba(34,211,238,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+    const SP = Math.max(60, W/9);
+    for(let k=-14;k<=14;k++){
+      const a = (0.30 - Math.abs(k)*0.016) * (0.55 + e*0.7);
+      if(a<=0) continue;
+      ctx.strokeStyle = 'rgba(255,45,149,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(cx,hy); ctx.lineTo(cx + k*SP - sway*1.6, H); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,'+(0.30+e*0.45)+')';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(0,hy); ctx.lineTo(W,hy); ctx.stroke();
+
+    drawCar(ctx, W, H, hy, cx + sway*0.35, swayV, clock);
+
+    requestAnimationFrame(frame);
+  }
+  /* ============================================================
+     The car: black 80s sports car seen from behind, taillight bar
+     with slats, the sun rim-lighting its roofline, a VRTX 84 plate.
+     Local units: width 1 (x -0.5..0.5), y up from the road (negative).
+     ============================================================ */
+  function drawCar(ctx, W, H, hy, x, v, t){
+    const S = Math.min(W*0.23, H*0.48);
+    const gy = H*0.965;                                   // where the tyres meet the grid
+    const bob = Math.sin(t*23)*S*0.0015 + Math.sin(t*7.3)*S*0.001;
+    const tilt = -v/W*0.9;                                // lean into the drift
+    const P = (px,py)=>[px*S, py*S];
+    const poly = pts => { ctx.beginPath(); pts.forEach(([a,b],i)=> i ? ctx.lineTo(...P(a,b)) : ctx.moveTo(...P(a,b))); ctx.closePath(); };
+
+    /* red glow of the taillights on the grid, and the car's shadow */
+    ctx.save();
+    ctx.translate(x, gy);
+    ctx.globalCompositeOperation = 'lighter';
+    const rg = ctx.createRadialGradient(0,S*0.02,0,0,S*0.02,S*0.75);
+    rg.addColorStop(0,'rgba(255,30,60,.30)'); rg.addColorStop(1,'rgba(255,30,60,0)');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.ellipse(0,S*0.03,S*0.75,S*0.12,0,0,6.2832); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(0,0,0,.75)';
+    ctx.beginPath(); ctx.ellipse(0,S*0.005,S*0.56,S*0.035,0,0,6.2832); ctx.fill();
+
+    ctx.translate(0, bob); ctx.rotate(tilt);
+
+    /* tyres */
+    for(const sx of [-1,1]){
+      ctx.fillStyle = '#050507';
+      ctx.beginPath(); ctx.roundRect(...P(sx>0?0.335:-0.475,-0.17), 0.14*S, 0.17*S, 0.025*S); ctx.fill();
+      ctx.fillStyle = 'rgba(120,110,160,.18)';                        // tread catching the light
+      for(let i=0;i<4;i++){
+        const yy = -0.155 + ((i*0.04 + t*1.9) % 0.16);
+        ctx.fillRect(...P(sx>0?0.345:-0.465, yy), 0.12*S, 0.008*S);
+      }
+    }
+
+    /* body: bumper and deck */
+    const body = [[-0.50,-0.10],[0.50,-0.10],[0.505,-0.30],[0.47,-0.37],[-0.47,-0.37],[-0.505,-0.30]];
+    poly(body);
+    let g = ctx.createLinearGradient(0,-0.37*S,0,-0.10*S);
+    g.addColorStop(0,'#1a1426'); g.addColorStop(.35,'#0b0912'); g.addColorStop(1,'#040306');
+    ctx.fillStyle = g; ctx.fill();
+
+    /* cabin: rear glass shows the sun through the car */
+    const cabin = [[-0.38,-0.37],[0.38,-0.37],[0.28,-0.53],[-0.28,-0.53]];
+    poly(cabin);
+    ctx.fillStyle = '#0a0810'; ctx.fill();
+    const glass = [[-0.33,-0.39],[0.33,-0.39],[0.255,-0.51],[-0.255,-0.51]];
+    poly(glass);
+    g = ctx.createLinearGradient(0,-0.51*S,0,-0.39*S);
+    g.addColorStop(0,'#3a1446'); g.addColorStop(.55,'#b8325e'); g.addColorStop(1,'#ff8a3a');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.save(); ctx.clip();                                 // sun slits seen through the glass
+    ctx.fillStyle = 'rgba(10,3,20,.55)';
+    for(let i=0;i<4;i++) ctx.fillRect(-0.4*S, (-0.46 + i*0.02)*S, 0.8*S, (0.004 + i*0.002)*S);
+    ctx.fillStyle = 'rgba(255,255,255,.10)';                // glare streak
+    ctx.beginPath(); ctx.moveTo(...P(-0.12,-0.52)); ctx.lineTo(...P(-0.04,-0.52)); ctx.lineTo(...P(-0.14,-0.39)); ctx.lineTo(...P(-0.22,-0.39)); ctx.fill();
+    ctx.restore();
+
+    /* spoiler lip */
+    poly([[-0.48,-0.375],[0.48,-0.375],[0.47,-0.395],[-0.47,-0.395]]);
+    ctx.fillStyle = '#0d0a14'; ctx.fill();
+
+    /* taillight bar with the classic horizontal slats */
+    const tl = [[-0.47,-0.235],[0.47,-0.235],[0.47,-0.315],[-0.47,-0.315]];
+    ctx.save();
+    ctx.shadowColor = '#ff1a3a'; ctx.shadowBlur = S*0.06;
+    poly(tl);
+    g = ctx.createLinearGradient(0,-0.315*S,0,-0.235*S);
+    g.addColorStop(0,'#ff4a5e'); g.addColorStop(.5,'#ff1030'); g.addColorStop(1,'#a0001a');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#0a0810';
+    for(let i=1;i<5;i++) ctx.fillRect(-0.47*S, (-0.315 + i*0.016)*S, 0.94*S, 0.005*S);
+    ctx.fillRect(-0.075*S, -0.315*S, 0.15*S, 0.08*S);       // centre panel between the lamps
+    ctx.globalCompositeOperation = 'lighter';
+    for(const sx of [-1,1]){                                // hot cores of the lamps
+      const lx = sx*0.3*S, ly = -0.275*S;
+      const lg = ctx.createRadialGradient(lx,ly,0,lx,ly,S*0.16);
+      lg.addColorStop(0,'rgba(255,200,200,.55)'); lg.addColorStop(.3,'rgba(255,40,70,.35)'); lg.addColorStop(1,'rgba(255,0,40,0)');
+      ctx.fillStyle = lg; ctx.fillRect(lx-S*0.16, ly-S*0.16, S*0.32, S*0.32);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    /* licence plate */
+    ctx.fillStyle = '#d9d4ea';
+    ctx.fillRect(-0.085*S, -0.20*S, 0.17*S, 0.06*S);
+    ctx.fillStyle = '#120a1e';
+    ctx.font = `700 ${Math.round(S*0.036)}px 'Share Tech Mono', ui-monospace, Menlo, monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('VRTX 84', 0, -0.169*S);
+
+    /* exhausts */
+    for(const sx of [-1,1]){
+      ctx.fillStyle = '#2a2433'; ctx.beginPath(); ctx.ellipse(sx*0.2*S, -0.115*S, 0.028*S, 0.016*S, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(sx*0.2*S, -0.115*S, 0.018*S, 0.009*S, 0, 0, 6.2832); ctx.fill();
+    }
+
+    /* rim light from the sun ahead: roofline, shoulders and flanks */
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = '#ff6a9a'; ctx.shadowBlur = S*0.03;
+    ctx.strokeStyle = 'rgba(255,150,120,.9)'; ctx.lineWidth = Math.max(1.5, S*0.004);
+    ctx.beginPath(); ctx.moveTo(...P(-0.38,-0.37)); ctx.lineTo(...P(-0.28,-0.53)); ctx.lineTo(...P(0.28,-0.53)); ctx.lineTo(...P(0.38,-0.37)); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,45,149,.85)';
+    ctx.beginPath(); ctx.moveTo(...P(-0.48,-0.395)); ctx.lineTo(...P(0.48,-0.395)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(...P(-0.47,-0.37)); ctx.lineTo(...P(-0.505,-0.30)); ctx.lineTo(...P(-0.50,-0.12)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(...P(0.47,-0.37)); ctx.lineTo(...P(0.505,-0.30)); ctx.lineTo(...P(0.50,-0.12)); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  requestAnimationFrame(frame);
+})();
+
+/* ============================================================
+   Fullscreen on click, hide the cursor when idle, keep the screen awake.
+   ============================================================ */
+(function screen(){
+  const body = document.body;
+  if(new URLSearchParams(location.search).has('embed')) body.classList.add('embed');
+
+  body.addEventListener('click', ()=>{
+    const d = document, el = d.documentElement;
+    if(d.fullscreenElement || d.webkitFullscreenElement){
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    }else{
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(req) req.call(el);
+    }
+  });
+  const onFs = ()=> body.classList.toggle('fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
+  document.addEventListener('fullscreenchange', onFs);
+  document.addEventListener('webkitfullscreenchange', onFs);
+
+  let idle;
+  const wake = ()=>{ body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(()=>body.classList.add('idle'), 2500); };
+  addEventListener('mousemove', wake); wake();
+
+  /* Screen Wake Lock is released when the tab is hidden, so re-request on return.
+     Browsers without it fall back to `caffeinate -d` on the Mac. */
+  let lock = null;
+  async function keepAwake(){
+    try{ if('wakeLock' in navigator && !lock){ lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', ()=>{ lock = null; }); } }catch(e){}
+  }
+  keepAwake();
+  body.addEventListener('click', keepAwake);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') keepAwake(); });
+})();
+</script>
+</body>
+</html>
