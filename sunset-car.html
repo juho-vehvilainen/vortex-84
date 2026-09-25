@@ -68,7 +68,10 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
    ============================================================ */
 (function background(){
   const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
-  let stars=[],ridge=[],phase=0,last=0,lastW=0,lastH=0,clock=0,synth=0,energy=0.25;
+  let stars=[],ridge=[],phase=0,last=0,lastW=0,lastH=0,synth=0,energy=0.25;
+  const DRIVE = 60;                                        // seconds from up close to the horizon
+  let clock = +(new URLSearchParams(location.search).get('t') || 0);   // ?t= starts mid-drive, for screenshots
+  const carCv = document.createElement('canvas'), carCtx = carCv.getContext('2d');
 
   function makeStars(W,H){
     const n = Math.min(260, Math.round(W*H/9000));
@@ -100,11 +103,11 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
     const W = cv.clientWidth || innerWidth;
     const H = cv.clientHeight || innerHeight;
     const bw = Math.round(W*DPR), bh = Math.round(H*DPR);
-    if(cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; }
+    if(cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; carCv.width = bw; carCv.height = bh; }
     if(W !== lastW || H !== lastH){ lastW = W; lastH = H; makeStars(W,H); makeRidge(W); }
     ctx.setTransform(DPR,0,0,DPR,0,0);
 
-    phase = (phase + dt*(0.55 + energy*0.25)) % 1;
+    phase = (phase + dt*(0.30 + energy*0.20)) % 1;
     clock += dt;
     /* the car drifts slowly across the lane; the world slides the other way */
     const sway = Math.sin(clock*0.23)*W*0.035 + Math.sin(clock*0.61)*W*0.008;
@@ -171,13 +174,25 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
       const a = (0.30 - Math.abs(k)*0.016) * (0.55 + e*0.7);
       if(a<=0) continue;
       ctx.strokeStyle = 'rgba(255,45,149,'+a.toFixed(3)+')';
-      ctx.beginPath(); ctx.moveTo(cx,hy); ctx.lineTo(cx + k*SP - sway*1.6, H); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,hy); ctx.lineTo(cx + k*SP, H); ctx.stroke();
     }
     ctx.strokeStyle = 'rgba(255,255,255,'+(0.30+e*0.45)+')';
     ctx.lineWidth = 1.4;
     ctx.beginPath(); ctx.moveTo(0,hy); ctx.lineTo(W,hy); ctx.stroke();
 
-    drawCar(ctx, W, H, hy, cx + sway*0.35, swayV, clock);
+    /* the drive: the car pulls away toward the sun, shrinking steadily until it
+       melts into the horizon, then a new drive fades in up close */
+    const u = (clock % DRIVE) / DRIVE;
+    const scale = 1 - 0.97*u;                              // screen size shrinks linearly
+    const gy = hy + (H*0.965 - hy)*scale;                  // tyres slide up toward the horizon
+    const alpha = Math.min(1, u/0.04) * Math.min(1, (1-u)/0.12);
+    carCtx.setTransform(1,0,0,1,0,0);
+    carCtx.clearRect(0,0,carCv.width,carCv.height);
+    carCtx.setTransform(DPR,0,0,DPR,0,0);
+    drawCar(carCtx, W, H, cx + sway*0.35*scale, swayV*scale, clock, scale, gy);
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+    ctx.globalAlpha = alpha; ctx.drawImage(carCv, 0, 0);
+    ctx.restore();
 
     requestAnimationFrame(frame);
   }
@@ -186,10 +201,10 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
      with slats, the sun rim-lighting its roofline, a VRTX 84 plate.
      Local units: width 1 (x -0.5..0.5), y up from the road (negative).
      ============================================================ */
-  function drawCar(ctx, W, H, hy, x, v, t){
-    const S = Math.min(W*0.23, H*0.48);
-    const gy = H*0.965;                                   // where the tyres meet the grid
+  function drawCar(ctx, W, H, x, v, t, scale, gy){
+    const S = Math.min(W*0.23, H*0.48) * scale;
     const bob = Math.sin(t*23)*S*0.0015 + Math.sin(t*7.3)*S*0.001;
+    if(S < 2) return;
     const tilt = -v/W*0.9;                                // lean into the drift
     const P = (px,py)=>[px*S, py*S];
     const poly = pts => { ctx.beginPath(); pts.forEach(([a,b],i)=> i ? ctx.lineTo(...P(a,b)) : ctx.moveTo(...P(a,b))); ctx.closePath(); };
@@ -270,9 +285,9 @@ body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
     ctx.fillStyle = '#d9d4ea';
     ctx.fillRect(-0.085*S, -0.20*S, 0.17*S, 0.06*S);
     ctx.fillStyle = '#120a1e';
-    ctx.font = `700 ${Math.round(S*0.036)}px 'Share Tech Mono', ui-monospace, Menlo, monospace`;
+    if(S*0.036 >= 6){ ctx.font = `700 ${Math.round(S*0.036)}px 'Share Tech Mono', ui-monospace, Menlo, monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('VRTX 84', 0, -0.169*S);
+    ctx.fillText('VRTX 84', 0, -0.169*S); }
 
     /* exhausts */
     for(const sx of [-1,1]){
