@@ -7,8 +7,8 @@
 <title>VORTEX 84 · Screen (dark)</title>
 <style>
 /* ============================================================
-   VORTEX 84 screen loop, dark variant: black void, purple glow,
-   particles spiralling into the vortex. Click to go fullscreen.
+   VORTEX 84 screen loop, dark variant: black void, purple glow
+   around the vortex. Click to go fullscreen.
    ============================================================ */
 :root{
   --magenta:#ff2d95;
@@ -20,8 +20,6 @@
 html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#000}
 body{cursor:pointer}
 body.idle{cursor:none}
-
-#dust{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:1}
 
 /* purple nebula: two soft blobs breathing out of phase, plus a slow-turning haze */
 .glow{position:fixed;left:50%;top:50%;border-radius:50%;pointer-events:none;z-index:0;transform:translate(-50%,-50%)}
@@ -121,7 +119,6 @@ body.fs #hint,body.idle #hint{opacity:0}
 <div class="glow g1"></div>
 <div class="glow g2"></div>
 <div class="glow haze"></div>
-<canvas id="dust" aria-hidden="true"></canvas>
 <div class="stage" aria-hidden="true">
   <span class="spinner">
     <span class="halo"></span>
@@ -141,65 +138,6 @@ body.fs #hint,body.idle #hint{opacity:0}
 <p id="hint">Click for fullscreen</p>
 
 <script>
-/* ============================================================
-   Particles: specks drift in from the dark, spiral clockwise and
-   fall into the core, then respawn at the edge. Short trails via
-   a partial erase each frame.
-   ============================================================ */
-(function dust(){
-  const cv = document.getElementById('dust'), ctx = cv.getContext('2d');
-  const COLORS = ['#b58cff','#ff5cc8','#22d3ee','#e9ddff','#7c3aed'];
-  let W=0,H=0,DPR=1,cx=0,cy=0,maxR=0,coreR=0,parts=[],last=0;
-
-  function spawn(p, anywhere){
-    p.a  = Math.random()*Math.PI*2;
-    p.r  = anywhere ? coreR + Math.random()*(maxR-coreR) : maxR*(0.85+Math.random()*0.3);
-    p.w  = (0.10 + Math.random()*0.25);          // base angular speed, rad/s at edge
-    p.in = 18 + Math.random()*40;                 // inward drift, px/s at edge
-    p.s  = Math.random()*1.4 + 0.4;
-    p.c  = COLORS[(Math.random()*COLORS.length)|0];
-    return p;
-  }
-  function resize(){
-    DPR = Math.min(devicePixelRatio||1, 2);
-    W = innerWidth; H = innerHeight;
-    cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    cx = W/2; cy = H/2;
-    maxR = Math.hypot(W,H)*0.55;
-    coreR = Math.min(W,H)*0.66*0.13;
-    const n = Math.min(700, Math.round(W*H/3200));
-    parts = Array.from({length:n}, ()=>spawn({}, true));
-  }
-
-  function frame(t){
-    const dt = Math.min(0.05,(t-last)/1000)||0.016; last = t;
-    // fade old trails to transparent, not black, so the glow behind shows through
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0,0,0,.22)';
-    ctx.fillRect(0,0,W,H);
-    ctx.globalCompositeOperation = 'lighter';
-    for(const p of parts){
-      const k = maxR / Math.max(p.r, coreR);      // closer = faster, like a drain
-      p.a += p.w * Math.pow(k, 0.9) * dt;
-      p.r -= p.in * Math.pow(k, 0.5) * dt;
-      if(p.r <= coreR){ spawn(p, false); continue; }
-      const x = cx + Math.cos(p.a)*p.r;
-      const y = cy + Math.sin(p.a)*p.r*0.92;
-      const fadeIn  = Math.min(1, (maxR - p.r)/(maxR*0.25) + 0.05);
-      const fadeOut = Math.min(1, (p.r - coreR)/(coreR*1.5));
-      ctx.globalAlpha = Math.max(0, fadeIn*fadeOut) * 0.85;
-      ctx.fillStyle = p.c;
-      ctx.beginPath(); ctx.arc(x,y,p.s,0,6.2832); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    requestAnimationFrame(frame);
-  }
-  addEventListener('resize', resize);
-  resize();
-  requestAnimationFrame(frame);
-})();
-
 /* ============================================================
    Fullscreen on click, hide the cursor when idle, keep the screen awake.
    ============================================================ */
