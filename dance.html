@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VORTEX 84 · Dance Floor</title>
+<style>
+/* ============================================================
+   VORTEX 84 dance floor: two synthwave guys and a T-800 dancing on the
+   sunset grid. For a TV or projector running all night. Click to go fullscreen.
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#05020c}
+body{cursor:pointer}
+body.idle{cursor:none}
+
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+
+/* CRT overlays, same as the site */
+.layer{position:fixed;inset:0;pointer-events:none;z-index:3}
+.scan{
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.30) 2px 3px);
+  opacity:.55;mix-blend-mode:multiply;
+}
+.sweep{
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(180,220,255,.055) 46%,rgba(255,255,255,0) 100%);
+  height:34vh;top:-34vh;bottom:auto;
+  animation:sweep 9s linear infinite;
+}
+@keyframes sweep{to{transform:translateY(140vh)}}
+.grain{
+  opacity:.10;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  animation:grain 620ms steps(4) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}
+  50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(0,0)}
+}
+.vig{
+  background:
+    radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 42%,rgba(0,0,0,.55) 82%,rgba(0,0,0,.9) 100%),
+    radial-gradient(60% 40% at 50% 100%,rgba(124,58,237,.16),rgba(0,0,0,0) 70%);
+}
+
+#hint{
+  position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);z-index:4;
+  font:14px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:#a596cf;background:rgba(5,2,12,.7);padding:8px 14px;border-radius:3px;
+  transition:opacity .6s ease;
+}
+body.fs #hint,body.idle #hint,body.embed #hint{opacity:0}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="layer scan"></div>
+<div class="layer sweep"></div>
+<div class="layer grain"></div>
+<div class="layer vig"></div>
+<p id="hint">Click for fullscreen</p>
+
+<script>
+/* ============================================================
+   Dance floor: the sunset backdrop with the grid as a lit floor,
+   two synthwave guys and a T-800 dancing to a 118 BPM clock.
+   ============================================================ */
+(function dance(){
+  const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+  const dc = document.createElement('canvas'), d = dc.getContext('2d');   // dancers, drawn once and reflected
+  const BPM = 118, BEATS_PER_MOVE = 16;
+  const MOVES = ['pump','travolta','runningman','clap'];
+  const TAU = Math.PI*2;
+  const skull = new Image(); skull.src = 'assets/img/t800.png';
+  const params = new URLSearchParams(location.search);
+  let clock = +(params.get('t') || 0);                     // ?t= seek, for screenshots
+  let stars=[],ridge=[],last=0,lastW=0,lastH=0,DPR=1,W=0,H=0;
+  let tiles = [];                                          // lit floor tiles {i,k,c,t}
+  let lastBeat = -1;
+
+  function makeStars(){
+    const n = Math.min(260, Math.round(W*H/9000));
+    stars = Array.from({length:n},()=>({x:Math.random()*W, y:Math.random()*H*0.72,
+      r:Math.random()*1.25+.25, tw:Math.random()*TAU, sp:Math.random()*1.8+.4}));
+  }
+  function makeRidge(){
+    ridge = []; let x = -40, seed = 1337;
+    const rnd = ()=> (seed = (seed*16807)%2147483647)/2147483647;
+    while(x < W+120){ const w = 60 + rnd()*140; ridge.push({x, w, h: 26 + rnd()*88}); x += w*0.62; }
+  }
+
+  const ease = x => { x = Math.max(0,Math.min(1,x)); return x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2; };
+  const lerp = (a,b,t) => a + (b-a)*t;
+  const dir = (a,len) => [Math.sin(a)*len, Math.cos(a)*len];   // angle 0 points down, + toward screen right
+
+  /* ---------- choreography: world angles for every limb at beat time b ---------- */
+  function pose(move, b, robot){
+    const ph = b % 1, n = Math.floor(b);
+    const dip = (Math.cos(TAU*b)+1)/2;                     // 1 on the beat: knees bend
+    const p = {bounce:dip, shift:0, lean:0, nod:dip*0.06,
+               la:[-0.25,-0.05], ra:[0.25,0.05], ll:[-0.10,-0.02], rl:[0.10,0.02]};
+    const knees = k => { p.ll = [-(0.10+k), 0.05+k*0.9]; p.rl = [(0.10+k), -(0.05+k*0.9)]; };
+
+    if(robot){
+      /* stiff poses that snap on every beat */
+      const R = [
+        {la:[-1.57, 3.14], ra:[ 0.35, 0.35]},
+        {la:[-0.35,-0.35], ra:[ 1.57,-3.14+6.28]},
+        {la:[-1.57,-1.57], ra:[ 1.57, 1.57]},
+        {la:[-0.20, 1.57], ra:[ 0.20,-1.57]},
+        {la:[-2.60,-2.60], ra:[ 0.30, 1.90]},
+        {la:[-0.30,-1.90], ra:[ 2.60, 2.60]},
+      ];
+      const a = R[n % R.length], z = R[(n+R.length-1) % R.length], k = ease(ph/0.18);
+      p.la = [lerp(z.la[0],a.la[0],k), lerp(z.la[1],a.la[1],k)];
+      p.ra = [lerp(z.ra[0],a.ra[0],k), lerp(z.ra[1],a.ra[1],k)];
+      knees(0.06 + 0.06*dip);
+      p.nod = (n%2 ? 0.08 : -0.08) * k;
+      p.bounce = 0.3*dip;
+      return p;
+    }
+    if(move === 'pump'){
+      knees(0.10 + 0.22*dip);
+      const up = 1 - dip;
+      p.ra = [lerp(3.14-0.35, 3.14-0.75, dip), lerp(3.14-0.25, 3.14-2.0, dip)];   // fist punching the sky
+      p.la = [-0.35 - 0.1*up, lerp(1.5, 2.1, up)];                                // bent arm keeping time
+    }else if(move === 'travolta'){
+      const up = n % 2 === 0, k = ease(ph/0.25);
+      const from = up ? [-0.55,-0.55] : [3.14-0.5, 3.14-0.5];
+      const to   = up ? [3.14-0.5, 3.14-0.5] : [-0.55,-0.55];
+      p.ra = [lerp(from[0],to[0],k), lerp(from[1],to[1],k)];                        // point up, then down across
+      p.la = [-0.65, 0.85];                                                        // hand on hip
+      p.shift = Math.sin(Math.PI*b)*0.035; p.lean = -Math.sin(Math.PI*b)*0.06;
+      knees(0.06 + 0.12*dip);
+      if(up){ p.rl = [0.22, -0.30]; } else { p.ll = [-0.22, 0.30]; }
+    }else if(move === 'runningman'){
+      const L = n % 2 === 0, lift = Math.sin(Math.PI*ph);
+      knees(0.08 + 0.10*dip);
+      if(L) p.ll = [-(0.10 + 0.55*lift), 0.05 + 1.1*lift];
+      else  p.rl = [ (0.10 + 0.55*lift), -(0.05 + 1.1*lift)];
+      const s = L ? 1 : -1;
+      p.la = [-0.30 - 0.25*s, -0.30 - 0.25*s + 1.6];
+      p.ra = [ 0.30 - 0.25*s,  0.30 - 0.25*s - 1.6];
+    }else if(move === 'clap'){
+      const clap = Math.pow(dip, 3);
+      p.shift = Math.sin(Math.PI*b)*0.06; p.lean = Math.sin(Math.PI*b)*0.05;
+      knees(0.08 + 0.14*dip);
+      p.la = [-(3.14-0.45), lerp(-(3.14-0.2), 2.45, clap)];
+      p.ra = [ (3.14-0.45), lerp( (3.14-0.2),-2.45, clap)];
+    }
+    return p;
+  }
+
+  /* ---------- drawing a dancer ---------- */
+  const CAST = [
+    {kind:'guy', x:0.27, jacket:'#141018', jacketHi:'#3a2f46', shirt:'#0f6f86', pants:'#1b2446', hair:'#2a1a12', long:true,
+     shades:'mirror', rim:'#22d3ee', skin:'#d9936a'},
+    {kind:'t800', x:0.50, rim:'#ff3b3b'},
+    {kind:'guy', x:0.73, jacket:'#e0407e', jacketHi:'#ff7fb0', shirt:'#b3124f', pants:'#20284a', hair:'#6a4428', long:false,
+     shades:'black', rim:'#ff2d95', skin:'#e0a07a', mirror:true},
+  ];
+
+  function capsule(g, a, b, w, color){
+    g.strokeStyle = color; g.lineWidth = w; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke();
+  }
+  function limb(root, ang, lens){
+    const pts = [root]; let p = root;
+    ang.forEach((a,i)=>{ const v = dir(a, lens[i]); p = [p[0]+v[0], p[1]+v[1]]; pts.push(p); });
+    return pts;
+  }
+
+  /* one dancer; pass 'rim' draws the fat glowing outline, pass 'fill' the body over it */
+  function drawDancer(g, c, X, ground, h, b, pass){
+    const robot = c.kind === 't800';
+    const move = MOVES[Math.floor(b / BEATS_PER_MOVE) % MOVES.length];
+    const p = pose(move, b, robot);
+    if(c.mirror){                                          // dance the mirror image of the other guy
+      const f = a => [-a[0], -a[1]];
+      [p.la, p.ra] = [f(p.ra), f(p.la)]; [p.ll, p.rl] = [f(p.rl), f(p.ll)];
+      p.shift = -p.shift; p.lean = -p.lean;
+    }
+    const th = 0.25*h, sh = 0.25*h, torso = 0.30*h, ua = 0.16*h, fa = 0.15*h;
+    const hipW = 0.055*h, shW = robot ? 0.10*h : 0.12*h, headR = 0.08*h;
+
+    /* hip height comes from the legs, so the lower foot always meets the floor */
+    const legDrop = a => Math.cos(a[0])*th + Math.cos(a[1])*sh;
+    const hipY = ground - Math.max(legDrop(p.ll), legDrop(p.rl)) - 0.012*h;
+    const hip = [X + p.shift*h, hipY];
+    const chest = [hip[0] + Math.sin(p.lean)*torso, hip[1] - Math.cos(p.lean)*torso];
+    const perp = [Math.cos(p.lean), Math.sin(p.lean)];
+    const hipL = [hip[0]-perp[0]*hipW, hip[1]-perp[1]*hipW], hipR = [hip[0]+perp[0]*hipW, hip[1]+perp[1]*hipW];
+    const shL = [chest[0]-perp[0]*shW, chest[1]-perp[1]*shW + 0.01*h], shR = [chest[0]+perp[0]*shW, chest[1]+perp[1]*shW + 0.01*h];
+    const head = [chest[0] + Math.sin(p.lean+p.nod*0.5)*0.11*h, chest[1] - Math.cos(p.lean)*0.11*h + p.nod*0.15*h];
+    const LL = limb(hipL, p.ll, [th, sh]), RL = limb(hipR, p.rl, [th, sh]);
+    const LA = limb(shL, p.la, [ua, fa]), RA = limb(shR, p.ra, [ua, fa]);
+
+    const rimW = pass === 'rim' ? 0.02*h : 0;
+    const col = x => pass === 'rim' ? c.rim : x;
+    g.lineJoin = 'round';
+
+    if(robot){
+      /* chrome endoskeleton */
+      const chrome = pass === 'rim' ? c.rim : (()=>{ const gr = g.createLinearGradient(X-0.1*h,0,X+0.1*h,0);
+        gr.addColorStop(0,'#5d6678'); gr.addColorStop(.35,'#eef3ff'); gr.addColorStop(.6,'#8994aa'); gr.addColorStop(1,'#2a303d'); return gr; })();
+      for(const L of [LL, RL, LA, RA]){
+        capsule(g, L[0], L[1], 0.035*h + rimW, chrome);
+        capsule(g, L[1], L[2], 0.030*h + rimW, chrome);
+        if(pass==='fill'){
+          for(const j of [L[0], L[1]]){ g.fillStyle = '#1a1e28'; g.beginPath(); g.arc(j[0], j[1], 0.018*h, 0, TAU); g.fill(); }
+          capsule(g, [lerp(L[0][0],L[1][0],.2), lerp(L[0][1],L[1][1],.2)], [lerp(L[0][0],L[1][0],.85), lerp(L[0][1],L[1][1],.85)], 0.008*h, '#232836');
+        }
+      }
+      for(const L of [LL, RL]){ capsule(g, L[2], [L[2][0] + (L===LL?-1:1)*0.045*h, L[2][1]+0.005*h], 0.03*h + rimW, chrome); }
+      /* spine, ribs, pelvis */
+      capsule(g, hip, chest, 0.03*h + rimW, chrome);
+      capsule(g, hipL, hipR, 0.04*h + rimW, chrome);
+      capsule(g, shL, shR, 0.03*h + rimW, chrome);
+      for(let i=0;i<4;i++){
+        const t = 0.25 + i*0.17, cx = lerp(hip[0],chest[0],t), cy = lerp(hip[1],chest[1],t), rw = (0.07 + 0.012*i)*h;
+        g.strokeStyle = chrome; g.lineWidth = 0.014*h + rimW*0.8; g.beginPath();
+        g.ellipse(cx, cy, rw, 0.028*h, p.lean, Math.PI*1.05, Math.PI*1.95, true); g.stroke();
+      }
+      capsule(g, chest, head, 0.03*h + rimW, chrome);
+      for(const A of [LA, RA]){ g.fillStyle = pass==='rim' ? c.rim : '#c9d1e2'; g.beginPath(); g.arc(A[2][0], A[2][1], 0.022*h + rimW/2, 0, TAU); g.fill(); }
+      /* the poster skull as the head; eyes flare on the beat */
+      const hw = 0.31*h, hh = hw*skull.height/(skull.width||1);
+      const ox = head[0] - hw*0.31, oy = head[1] - hh*0.44;
+      if(pass === 'rim'){
+        g.save(); g.shadowColor = c.rim; g.shadowBlur = 0.05*h;
+        g.fillStyle = c.rim; g.beginPath(); g.ellipse(head[0]+0.012*h, head[1]-0.03*h, 0.10*h, 0.13*h, 0, 0, TAU); g.fill(); g.restore();
+      }else if(skull.complete && skull.naturalWidth){
+        g.drawImage(skull, 0, 0, skull.width, skull.height*0.74, ox, oy, hw, hh*0.74);
+        g.globalCompositeOperation = 'lighter';
+        for(const [ex,ey] of [[0.149,0.365],[0.451,0.349]]){
+          const x = ox + ex*hw, y = oy + ey*hh, R = 0.03*h*(0.8 + 0.8*p.bounce);
+          const rg = g.createRadialGradient(x,y,0,x,y,R);
+          rg.addColorStop(0,'rgba(255,255,255,.9)'); rg.addColorStop(.3,'rgba(255,40,40,.8)'); rg.addColorStop(1,'rgba(255,0,0,0)');
+          g.fillStyle = rg; g.beginPath(); g.arc(x,y,R,0,TAU); g.fill();
+        }
+        g.globalCompositeOperation = 'source-over';
+      }
+      return;
+    }
+
+    /* ---- synthwave guy ---- */
+    /* legs: jeans and white high-tops */
+    for(const L of [LL, RL]){
+      capsule(g, L[0], L[1], 0.078*h + rimW, col(c.pants));
+      capsule(g, L[1], L[2], 0.066*h + rimW, col(c.pants));
+      const toe = L===LL ? -1 : 1;
+      capsule(g, [L[2][0]-toe*0.005*h, L[2][1]+0.006*h], [L[2][0]+toe*0.045*h, L[2][1]+0.008*h], 0.042*h + rimW, col('#eceaf5'));
+      if(pass==='fill') capsule(g, [L[2][0]-toe*0.01*h, L[2][1]+0.022*h], [L[2][0]+toe*0.055*h, L[2][1]+0.024*h], 0.01*h, '#b8b2cc');
+    }
+    /* long hair falls behind the shoulders */
+    if(c.long){
+      g.fillStyle = col(c.hair);
+      g.beginPath(); g.ellipse(head[0], head[1]+0.07*h, 0.085*h + rimW/2, 0.11*h + rimW/2, p.lean, 0, TAU); g.fill();
+    }
+    /* jacket: shoulder pads, open front over the shirt */
+    const pad = 0.035*h;
+    const body = [[shL[0]-pad*perp[0], shL[1]-pad*perp[1]-0.012*h], [shR[0]+pad*perp[0], shR[1]+pad*perp[1]-0.012*h],
+                  [hipR[0]+0.03*h, hipR[1]+0.02*h], [hipL[0]-0.03*h, hipL[1]+0.02*h]];
+    g.beginPath(); body.forEach((q,i)=> i ? g.lineTo(q[0],q[1]) : g.moveTo(q[0],q[1])); g.closePath();
+    if(pass === 'rim'){ g.strokeStyle = c.rim; g.lineWidth = rimW*2; g.stroke(); g.fillStyle = c.rim; g.fill(); }
+    else{
+      const jg = g.createLinearGradient(shL[0],0,shR[0],0);
+      jg.addColorStop(0,c.jacketHi); jg.addColorStop(.3,c.jacket); jg.addColorStop(.75,c.jacket); jg.addColorStop(1,c.jacketHi);
+      g.fillStyle = jg; g.fill();
+      g.beginPath();                                                   // shirt showing through the open jacket
+      g.moveTo(lerp(shL[0],shR[0],.38), shL[1]); g.lineTo(lerp(shL[0],shR[0],.62), shR[1]);
+      g.lineTo(lerp(hipL[0],hipR[0],.66), hipR[1]+0.01*h); g.lineTo(lerp(hipL[0],hipR[0],.34), hipL[1]+0.01*h); g.closePath();
+      g.fillStyle = c.shirt; g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 0.006*h;  // lapels
+      g.beginPath(); g.moveTo(lerp(shL[0],shR[0],.36), shL[1]); g.lineTo(lerp(hipL[0],hipR[0],.32), hipL[1]);
+      g.moveTo(lerp(shL[0],shR[0],.64), shR[1]); g.lineTo(lerp(hipL[0],hipR[0],.68), hipR[1]); g.stroke();
+    }
+    /* neck and head */
+    capsule(g, chest, head, 0.045*h + rimW, col(c.skin));
+    g.fillStyle = col(c.skin);
+    g.beginPath(); g.ellipse(head[0], head[1], headR*0.86 + rimW/2, headR + rimW/2, p.lean, 0, TAU); g.fill();
+    /* hair on top: mullet or curtains */
+    g.fillStyle = col(c.hair);
+    g.beginPath(); g.ellipse(head[0], head[1]-headR*0.55, headR*0.98 + rimW/2, headR*0.62 + rimW/2, p.lean, Math.PI, TAU); g.fill();
+    if(c.long){ for(const s of [-1,1]){ g.beginPath(); g.ellipse(head[0]+s*headR*0.85, head[1]+headR*0.2, headR*0.32, headR*0.85, 0, 0, TAU); g.fill(); } }
+    else{ for(const s of [-1,1]){ g.beginPath(); g.ellipse(head[0]+s*headR*0.8, head[1]-headR*0.05, headR*0.26, headR*0.62, 0, 0, TAU); g.fill(); } }
+    if(pass === 'fill'){
+      /* sunglasses */
+      const gy = head[1] - headR*0.12, gw = headR*0.62, gh = headR*0.32;
+      for(const s of [-1,1]){
+        const gx = head[0] + s*headR*0.36;
+        g.beginPath(); g.roundRect(gx-gw/2, gy-gh/2, gw, gh, gh*0.35);
+        if(c.shades === 'mirror'){
+          const sg = g.createLinearGradient(0, gy-gh/2, 0, gy+gh/2);
+          sg.addColorStop(0,'#9ad8ff'); sg.addColorStop(.45,'#3a55ff'); sg.addColorStop(.55,'#ff5cc8'); sg.addColorStop(1,'#6a1a8a');
+          g.fillStyle = sg;
+        }else g.fillStyle = '#07060a';
+        g.fill();
+        g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(gx-gw*0.3, gy-gh*0.3, gw*0.25, gh*0.14);
+      }
+      g.strokeStyle = '#0a0a10'; g.lineWidth = 0.006*h;
+      g.beginPath(); g.moveTo(head[0]-headR*0.06, gy); g.lineTo(head[0]+headR*0.06, gy); g.stroke();
+      /* stubble and a grin */
+      g.fillStyle = 'rgba(40,20,20,.25)'; g.beginPath(); g.ellipse(head[0], head[1]+headR*0.55, headR*0.55, headR*0.35, 0, 0, Math.PI); g.fill();
+      g.strokeStyle = 'rgba(60,20,20,.8)'; g.lineWidth = 0.005*h;
+      g.beginPath(); g.arc(head[0], head[1]+headR*0.3, headR*0.28, 0.25*Math.PI, 0.75*Math.PI); g.stroke();
+    }
+    /* arms: jacket sleeves, hands */
+    for(const A of [LA, RA]){
+      capsule(g, A[0], A[1], 0.062*h + rimW, col(c.jacket));
+      capsule(g, A[1], A[2], 0.054*h + rimW, col(c.jacket));
+      if(pass === 'fill'){ capsule(g, A[0], A[1], 0.018*h, c.jacketHi); }
+      g.fillStyle = col(c.skin); g.beginPath(); g.arc(A[2][0], A[2][1], 0.028*h + rimW/2, 0, TAU); g.fill();
+    }
+  }
+
+  /* ---------- frame ---------- */
+  function frame(t){
+    const dt = Math.min(0.05,(t-last)/1000)||0.016; last = t;
+    clock += dt;
+    const b = clock * BPM/60, beat = Math.floor(b), ph = b % 1;
+    const pulse = Math.pow(1-ph, 3);                        // flash right on the beat
+
+    DPR = Math.min(devicePixelRatio||1, 2);
+    W = cv.clientWidth || innerWidth; H = cv.clientHeight || innerHeight;
+    const bw = Math.round(W*DPR), bh = Math.round(H*DPR);
+    if(cv.width !== bw || cv.height !== bh){ cv.width = bw; cv.height = bh; dc.width = bw; dc.height = bh; }
+    if(W !== lastW || H !== lastH){ lastW = W; lastH = H; makeStars(); makeRidge(); }
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    const hy = H*0.62, cx = W*0.5, e = 0.3 + 0.35*pulse;   // horizon raised so the floor has room
+
+    /* sky, stars */
+    let sky = ctx.createLinearGradient(0,0,0,hy);
+    sky.addColorStop(0,'#05020c'); sky.addColorStop(.55,'#170a2e'); sky.addColorStop(1,'#4a1152');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,hy);
+    for(const s of stars){
+      if(s.y > hy) continue;
+      s.tw += dt*s.sp;
+      ctx.globalAlpha = Math.max(0,Math.min(1,(0.35 + 0.45*Math.sin(s.tw))*0.8));
+      ctx.fillStyle = '#dbe7ff'; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    /* sun */
+    const R = Math.min(W,H)*0.30;
+    const g = ctx.createLinearGradient(0,hy-R,0,hy+R*0.25);
+    g.addColorStop(0,'#ffe36a'); g.addColorStop(.45,'#ff6a1f'); g.addColorStop(1,'#ff2d95');
+    ctx.save(); ctx.beginPath(); ctx.arc(cx,hy,R,Math.PI,0); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = g; ctx.fillRect(cx-R,hy-R,R*2,R*1.2);
+    ctx.fillStyle = 'rgba(10,3,20,.92)';
+    for(let i=1;i<10;i++){ const q = i/10; ctx.fillRect(cx-R, hy - R + R*Math.pow(q,0.6)*1.02, R*2, 2 + q*9); }
+    ctx.restore();
+    ctx.globalAlpha = Math.min(1, .2 + e*.25);
+    const bl = ctx.createRadialGradient(cx,hy,R*.3,cx,hy,R*2.6);
+    bl.addColorStop(0,'#ff6a1f'); bl.addColorStop(1,'rgba(255,106,31,0)');
+    ctx.fillStyle = bl; ctx.fillRect(0,0,W,hy+R);
+    ctx.globalAlpha = 1;
+
+    /* ridge */
+    ctx.fillStyle = '#180a2b';
+    ctx.beginPath(); ctx.moveTo(-40,hy);
+    for(const m of ridge){ ctx.lineTo(m.x+m.w*0.5, hy-m.h*0.8); ctx.lineTo(m.x+m.w, hy); }
+    ctx.lineTo(W+80,hy); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,45,149,.45)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+    /* floor */
+    let gr = ctx.createLinearGradient(0,hy,0,H);
+    gr.addColorStop(0,'#12061f'); gr.addColorStop(1,'#07030f');
+    ctx.fillStyle = gr; ctx.fillRect(0,hy,W,H-hy);
+
+    const ROWS = 14, depth = H-hy, SP = Math.max(60, W/9);
+    const rowY = i => hy + depth*Math.pow(i/ROWS, 2.2);
+    const colX = (k,y) => cx + k*SP*(y-hy)/(H-hy);
+
+    /* light a handful of tiles on every beat, disco-floor style */
+    if(beat !== lastBeat){
+      lastBeat = beat;
+      const COLS = ['#22d3ee','#ff2d95','#a855f7','#ffb020'];
+      for(let n=0;n<9;n++) tiles.push({i:5 + (Math.random()*(ROWS-5))|0, k:-7 + (Math.random()*14)|0, c:COLS[(Math.random()*4)|0], t:0});
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    for(const tl of tiles){
+      tl.t += dt;
+      const y0 = rowY(tl.i), y1 = rowY(tl.i+1);
+      ctx.globalAlpha = Math.max(0, 0.55*(1 - tl.t/0.9));
+      ctx.fillStyle = tl.c;
+      ctx.beginPath(); ctx.moveTo(colX(tl.k,y0),y0); ctx.lineTo(colX(tl.k+1,y0),y0); ctx.lineTo(colX(tl.k+1,y1),y1); ctx.lineTo(colX(tl.k,y1),y1); ctx.closePath(); ctx.fill();
+    }
+    tiles = tiles.filter(tl => tl.t < 0.9);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+
+    ctx.lineWidth = 1;
+    for(let i=1;i<=ROWS;i++){
+      const y = rowY(i), a = (0.12 + 0.5*i/ROWS) * (0.7 + 0.5*pulse);
+      ctx.strokeStyle = 'rgba(34,211,238,'+Math.min(1,a).toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+    for(let k=-14;k<=14;k++){
+      const a = Math.min(1,(0.34 - Math.abs(k)*0.016) * (0.7 + 0.5*pulse));
+      if(a<=0) continue;
+      ctx.strokeStyle = 'rgba(255,45,149,'+a.toFixed(3)+')';
+      ctx.beginPath(); ctx.moveTo(cx,hy); ctx.lineTo(colX(k,H), H); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(0,hy); ctx.lineTo(W,hy); ctx.stroke();
+
+    /* spotlights sweeping down onto the floor */
+    ctx.globalCompositeOperation = 'lighter';
+    [['255,45,149',0.18,-0.9],[ '34,211,238',0.82,0.7],['168,85,247',0.5,1.9]].forEach(([rgb,sx,off])=>{
+      const ang = Math.sin(clock*0.5 + off)*0.38, top = [W*sx, -H*0.05], len = H*1.25, wd = 0.13;
+      const a1 = ang - wd, a2 = ang + wd;
+      const bg = ctx.createLinearGradient(top[0],top[1], top[0]+Math.sin(ang)*len, top[1]+Math.cos(ang)*len);
+      bg.addColorStop(0,`rgba(${rgb},.22)`); bg.addColorStop(1,`rgba(${rgb},0)`);
+      ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(...top);
+      ctx.lineTo(top[0]+Math.sin(a1)*len, top[1]+Math.cos(a1)*len); ctx.lineTo(top[0]+Math.sin(a2)*len, top[1]+Math.cos(a2)*len);
+      ctx.closePath(); ctx.fill();
+    });
+    ctx.globalCompositeOperation = 'source-over';
+
+    /* dancers: rim pass then body pass into their own layer */
+    const ground = H*0.93, h = Math.min(H*0.56, W*0.30);
+    d.setTransform(1,0,0,1,0,0); d.clearRect(0,0,dc.width,dc.height); d.setTransform(DPR,0,0,DPR,0,0);
+    for(const c of CAST){
+      d.save(); d.shadowColor = c.rim; d.shadowBlur = h*0.05;
+      drawDancer(d, c, W*c.x, ground, h, b, 'rim');
+      d.restore();
+      drawDancer(d, c, W*c.x, ground, h, b, 'fill');
+    }
+    /* shadows under the feet */
+    for(const c of CAST){
+      const sg = ctx.createRadialGradient(W*c.x, ground, 0, W*c.x, ground, h*0.2);
+      sg.addColorStop(0,'rgba(0,0,0,.6)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.ellipse(W*c.x, ground, h*0.2, h*0.035, 0, 0, TAU); ctx.fill();
+    }
+    /* reflection in the glossy floor, then the dancers themselves */
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+    ctx.globalAlpha = 0.16;
+    ctx.translate(0, 2*ground*DPR); ctx.scale(1,-1);
+    ctx.drawImage(dc, 0, 0);
+    ctx.restore();
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(dc, 0, 0); ctx.restore();
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+
+/* ============================================================
+   Fullscreen on click, hide the cursor when idle, keep the screen awake.
+   ============================================================ */
+(function screen(){
+  const body = document.body;
+  if(new URLSearchParams(location.search).has('embed')) body.classList.add('embed');
+
+  body.addEventListener('click', ()=>{
+    const d = document, el = d.documentElement;
+    if(d.fullscreenElement || d.webkitFullscreenElement){
+      (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    }else{
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(req) req.call(el);
+    }
+  });
+  const onFs = ()=> body.classList.toggle('fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
+  document.addEventListener('fullscreenchange', onFs);
+  document.addEventListener('webkitfullscreenchange', onFs);
+
+  let idle;
+  const wake = ()=>{ body.classList.remove('idle'); clearTimeout(idle); idle = setTimeout(()=>body.classList.add('idle'), 2500); };
+  addEventListener('mousemove', wake); wake();
+
+  /* Screen Wake Lock is released when the tab is hidden, so re-request on return.
+     Browsers without it fall back to `caffeinate -d` on the Mac. */
+  let lock = null;
+  async function keepAwake(){
+    try{ if('wakeLock' in navigator && !lock){ lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', ()=>{ lock = null; }); } }catch(e){}
+  }
+  keepAwake();
+  body.addEventListener('click', keepAwake);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') keepAwake(); });
+})();
+</script>
+</body>
+</html>
